@@ -320,9 +320,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
               ),
             ],
           ),
-        ],
-      ),
-    );
+        );
   }
 
   Widget _buildStep2SetLimit() {
