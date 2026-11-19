@@ -7,7 +7,7 @@ class V2Colors {
   static const Color borderSubtle = Color(0xFF24272E);
 
   static const Color accentPrimary = Color(0xFF6E5CF6);
-  static const Color semanticPositive = Color(0xFF28A774);
+  static const Color semanticPositive = Color(0xFF1A8F5F);
   static const Color semanticWarning = Color(0xFFD97736);
   static const Color semanticDanger = Color(0xFFE5484D);
 
