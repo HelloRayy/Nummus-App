@@ -174,9 +174,7 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    _selectedCategory == null
-                        ? 'Available: Rp 2.135.000'
-                        : 'Category: ${_categories[_selectedCategory!].label}',
+                    'Available: Rp 2.135.000',
                     style: V2Typography.labelMuted(size: 12),
                   ),
                   const SizedBox(height: 16),
