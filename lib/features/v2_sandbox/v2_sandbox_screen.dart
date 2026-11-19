@@ -53,10 +53,7 @@ class V2SandboxScreen extends StatelessWidget {
             final usedPct =
                 limit > 0 ? ((spent / limit) * 100).round().clamp(0, 999) : 0;
 
-            final now = DateTime.now();
-            final remainingDays = (8 - now.weekday).clamp(1, 7);
-            final dayBudget =
-                available > 0 ? (available / remainingDays).round() : 0;
+            final dayBudget = repository.remainingToday;
 
             final lastTx = repository.expenses.isNotEmpty
                 ? repository.expenses.first

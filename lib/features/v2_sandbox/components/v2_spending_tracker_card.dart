@@ -121,7 +121,7 @@ class V2SpendingTrackerCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Available this month',
+                      'Available this week',
                       style: V2Typography.labelMuted(),
                     ),
                     const SizedBox(height: 4),
@@ -136,7 +136,7 @@ class V2SpendingTrackerCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Spending limit',
+                      'Weekly limit',
                       style: V2Typography.labelMuted(),
                     ),
                     const SizedBox(height: 4),
