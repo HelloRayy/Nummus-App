@@ -5,12 +5,14 @@ class V2SpendingTrackerCard extends StatelessWidget {
   final String availableText;
   final String limitText;
   final double progress;
+  final VoidCallback? onTap;
 
   const V2SpendingTrackerCard({
     super.key,
     this.availableText = '\$2135.00',
     this.limitText = '\$3,280.45',
     this.progress = 0.58,
+    this.onTap,
   });
 
   @override
@@ -30,20 +32,33 @@ class V2SpendingTrackerCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(cardPadding),
-        decoration: BoxDecoration(
-          color: V2Colors.surfaceCard,
-          borderRadius: BorderRadius.circular(cardRadius),
-          border: Border.all(color: V2Colors.borderSubtle),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Monthly spending tracker',
-              style: V2Typography.cardTitle(size: titleSize),
-            ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(cardRadius),
+        child: Container(
+          padding: const EdgeInsets.all(cardPadding),
+          decoration: BoxDecoration(
+            color: V2Colors.surfaceCard,
+            borderRadius: BorderRadius.circular(cardRadius),
+            border: Border.all(color: V2Colors.borderSubtle),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Monthly spending tracker',
+                    style: V2Typography.cardTitle(size: titleSize),
+                  ),
+                  const Icon(
+                    Icons.add_circle_outline_rounded,
+                    size: 18,
+                    color: V2Colors.textSecondary,
+                  ),
+                ],
+              ),
             const SizedBox(height: 16),
             ShaderMask(
               blendMode: BlendMode.dstIn,
@@ -134,6 +149,7 @@ class V2SpendingTrackerCard extends StatelessWidget {
               ],
             ),
           ],
+        ),
         ),
       ),
     );

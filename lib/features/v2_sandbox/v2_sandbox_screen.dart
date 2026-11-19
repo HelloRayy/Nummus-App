@@ -5,10 +5,18 @@ import 'components/v2_bottom_action_bar.dart';
 import 'components/v2_header_greeting.dart';
 import 'components/v2_recent_transactions.dart';
 import 'components/v2_spending_tracker_card.dart';
+import 'v2_add_budget_screen.dart';
 import 'v2_numpad_screen.dart';
 
 class V2SandboxScreen extends StatelessWidget {
   const V2SandboxScreen({super.key});
+
+  void _openAddBudget(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const V2AddBudgetScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,18 +25,20 @@ class V2SandboxScreen extends StatelessWidget {
       body: SafeArea(
         child: Stack(
           children: [
-            const SingleChildScrollView(
-              padding: EdgeInsets.only(bottom: 104),
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 104),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  V2HeaderGreeting(),
-                  SizedBox(height: 20),
-                  V2SpendingTrackerCard(),
-                  SizedBox(height: 16),
-                  V2BentoMetricGrid(),
-                  SizedBox(height: 20),
-                  V2RecentTransactions(),
+                  const V2HeaderGreeting(),
+                  const SizedBox(height: 20),
+                  V2SpendingTrackerCard(
+                    onTap: () => _openAddBudget(context),
+                  ),
+                  const SizedBox(height: 16),
+                  const V2BentoMetricGrid(),
+                  const SizedBox(height: 20),
+                  const V2RecentTransactions(),
                 ],
               ),
             ),
@@ -38,6 +48,11 @@ class V2SandboxScreen extends StatelessWidget {
                   context,
                   MaterialPageRoute(builder: (_) => const V2NumpadScreen()),
                 );
+              },
+              onMenuSelect: (item) {
+                if (item == 'Budget') {
+                  _openAddBudget(context);
+                }
               },
             ),
           ],
