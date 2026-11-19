@@ -5,18 +5,19 @@ import 'components/v2_bottom_action_bar.dart';
 import 'components/v2_header_greeting.dart';
 import 'components/v2_recent_transactions.dart';
 import 'components/v2_spending_tracker_card.dart';
+import 'v2_numpad_screen.dart';
 
 class V2SandboxScreen extends StatelessWidget {
   const V2SandboxScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       backgroundColor: V2Colors.bgPrimary,
       body: SafeArea(
         child: Stack(
           children: [
-            SingleChildScrollView(
+            const SingleChildScrollView(
               padding: EdgeInsets.only(bottom: 104),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,7 +32,14 @@ class V2SandboxScreen extends StatelessWidget {
                 ],
               ),
             ),
-            V2BottomActionBar(),
+            V2BottomActionBar(
+              onCtaTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const V2NumpadScreen()),
+                );
+              },
+            ),
           ],
         ),
       ),
