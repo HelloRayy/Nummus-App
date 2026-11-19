@@ -18,8 +18,6 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
     (label: 'Coffee', icon: Icons.coffee_rounded),
     (label: 'Transport', icon: Icons.directions_car_rounded),
     (label: 'Grocery', icon: Icons.shopping_bag_rounded),
-    (label: 'Bills', icon: Icons.receipt_long_rounded),
-    (label: 'Other', icon: Icons.more_horiz_rounded),
   ];
 
   void _onKeyTap(String key) {
@@ -183,17 +181,17 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Circle Icon-Only Categories inside sheet above Numpad
-                  SizedBox(
-                    height: 50,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _categories.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 10),
-                      itemBuilder: (context, index) {
-                        final cat = _categories[index];
-                        final selected = index == _selectedCategory;
-                        return GestureDetector(
+                  // Circle Icon-Only Categories (max 4, centered)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(_categories.length, (index) {
+                      final cat = _categories[index];
+                      final selected = index == _selectedCategory;
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          right: index == _categories.length - 1 ? 0 : 14,
+                        ),
+                        child: GestureDetector(
                           onTap: () {
                             setState(() {
                               _selectedCategory = selected ? null : index;
@@ -222,9 +220,9 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                                   : V2Colors.textSecondary,
                             ),
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    }),
                   ),
                   const SizedBox(height: 16),
 
