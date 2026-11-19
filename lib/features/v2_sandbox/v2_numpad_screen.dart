@@ -132,68 +132,7 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
 
             const Spacer(),
 
-            // Circle Icon-Only Categories above Numpad Sheet
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: horizontalPadding),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _selectedCategory == null
-                        ? 'Choose category'
-                        : 'Category: ${_categories[_selectedCategory!].label}',
-                    style: V2Typography.cardTitle(size: 14),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    height: 52,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _categories.length,
-                      separatorBuilder: (_, _) => const SizedBox(width: 10),
-                      itemBuilder: (context, index) {
-                        final cat = _categories[index];
-                        final selected = index == _selectedCategory;
-                        return GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _selectedCategory = selected ? null : index;
-                            });
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 160),
-                            width: 52,
-                            height: 52,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: selected
-                                  ? V2Colors.accentPrimary
-                                  : V2Colors.surfaceCard,
-                              border: Border.all(
-                                color: selected
-                                    ? V2Colors.accentPrimary
-                                    : V2Colors.borderSubtle,
-                              ),
-                            ),
-                            child: Icon(
-                              cat.icon,
-                              size: 22,
-                              color: selected
-                                  ? V2Colors.bgPrimary
-                                  : V2Colors.textSecondary,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 18),
-
-            // Bottom Sheet Container (Nominal + Numpad + CTA)
+            // Bottom Sheet Container (Nominal + Categories + Numpad + CTA)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(
@@ -237,10 +176,57 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Available: Rp 2.135.000',
+                    _selectedCategory == null
+                        ? 'Available: Rp 2.135.000'
+                        : 'Category: ${_categories[_selectedCategory!].label}',
                     style: V2Typography.labelMuted(size: 12),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
+
+                  // Circle Icon-Only Categories inside sheet above Numpad
+                  SizedBox(
+                    height: 50,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _categories.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        final cat = _categories[index];
+                        final selected = index == _selectedCategory;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedCategory = selected ? null : index;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: selected
+                                  ? V2Colors.accentPrimary
+                                  : V2Colors.surfaceElevated,
+                              border: Border.all(
+                                color: selected
+                                    ? V2Colors.accentPrimary
+                                    : V2Colors.borderSubtle,
+                              ),
+                            ),
+                            child: Icon(
+                              cat.icon,
+                              size: 20,
+                              color: selected
+                                  ? V2Colors.bgPrimary
+                                  : V2Colors.textSecondary,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
                   // Custom Numpad (4 rows x 3 cols)
                   _NumpadRow(
