@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/v2_tokens.dart';
-import 'numpad_tuner_hud.dart';
 
 class V2NumpadScreen extends StatefulWidget {
   const V2NumpadScreen({super.key});
@@ -11,9 +10,8 @@ class V2NumpadScreen extends StatefulWidget {
 }
 
 class _V2NumpadScreenState extends State<V2NumpadScreen> {
-  final NumpadTunerConfig _config = NumpadTunerConfig();
   String _rawDigits = '';
-  int _selectedCategory = 0;
+  int? _selectedCategory;
 
   static const _categories = [
     (label: 'Food', icon: Icons.restaurant_rounded),
@@ -23,12 +21,6 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
     (label: 'Bills', icon: Icons.receipt_long_rounded),
     (label: 'Other', icon: Icons.more_horiz_rounded),
   ];
-
-  @override
-  void dispose() {
-    _config.dispose();
-    super.dispose();
-  }
 
   void _onKeyTap(String key) {
     HapticFeedback.lightImpact();
@@ -70,251 +62,268 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    const double horizontalPadding = 12.2;
+    const double sheetRadius = 40.0;
+    const double amountSize = 58.0;
+    const double keyHeight = 60.5;
+    const double keyGap = 6.0;
+    const double keyRadius = 28.0;
+    const double keyFontSize = 19.7;
+    const double ctaHeight = 58.4;
+
     final formatted = _formatRupiah(_rawDigits);
 
     return Scaffold(
       backgroundColor: V2Colors.bgPrimary,
       body: SafeArea(
-        child: ListenableBuilder(
-          listenable: _config,
-          builder: (_, _) {
-            final c = _config;
-            return Stack(
-              children: [
-                Column(
-                  children: [
-                    // Top Bar
-                    Padding(
-                      padding: EdgeInsets.fromLTRB(
-                        c.horizontalPadding,
-                        12,
-                        c.horizontalPadding,
-                        0,
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          InkWell(
-                            onTap: () => Navigator.pop(context),
-                            borderRadius: BorderRadius.circular(999),
-                            child: Container(
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: V2Colors.surfaceCard,
-                                border: Border.all(color: V2Colors.borderSubtle),
-                              ),
-                              child: const Icon(
-                                Icons.arrow_back_rounded,
-                                color: V2Colors.textPrimary,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: V2Colors.surfaceCard,
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(color: V2Colors.borderSubtle),
-                            ),
-                            child: const Text(
-                              'Today',
-                              style: TextStyle(
-                                color: V2Colors.textSecondary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const Spacer(),
-
-                    // Bottom Sheet Container (Nominal + Category Strip + Numpad + CTA)
-                    Container(
-                      width: double.infinity,
-                      padding: EdgeInsets.fromLTRB(
-                        c.horizontalPadding,
-                        24,
-                        c.horizontalPadding,
-                        16,
-                      ),
+        child: Column(
+          children: [
+            // Top Bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                horizontalPadding,
+                12,
+                horizontalPadding,
+                0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      width: 44,
+                      height: 44,
                       decoration: BoxDecoration(
+                        shape: BoxShape.circle,
                         color: V2Colors.surfaceCard,
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(c.sheetRadius),
-                        ),
-                        border: const Border(
-                          top: BorderSide(color: V2Colors.borderSubtle),
-                        ),
+                        border: Border.all(color: V2Colors.borderSubtle),
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Nominal Display
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.baseline,
-                            textBaseline: TextBaseline.alphabetic,
-                            children: [
-                              Text(
-                                'Rp ',
-                                style: V2Typography.displayBalance(size: 22)
-                                    .copyWith(color: V2Colors.textMuted),
-                              ),
-                              Text(
-                                formatted,
-                                style: V2Typography.displayBalance(size: c.amountSize)
-                                    .copyWith(
-                                  color: _rawDigits.isEmpty
-                                      ? V2Colors.textMuted
-                                      : V2Colors.textPrimary,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'Available: Rp 2.135.000',
-                            style: V2Typography.labelMuted(size: 12),
-                          ),
-                          const SizedBox(height: 18),
-
-                          // Category Strip right above Numpad
-                          SizedBox(
-                            height: 40,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: _categories.length,
-                              separatorBuilder: (_, _) => const SizedBox(width: 8),
-                              itemBuilder: (context, index) {
-                                final cat = _categories[index];
-                                final selected = index == _selectedCategory;
-                                return GestureDetector(
-                                  onTap: () => setState(() => _selectedCategory = index),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                                    decoration: BoxDecoration(
-                                      color: selected
-                                          ? V2Colors.accentPrimary.withValues(alpha: 0.16)
-                                          : V2Colors.surfaceElevated,
-                                      borderRadius: BorderRadius.circular(999),
-                                      border: Border.all(
-                                        color: selected
-                                            ? V2Colors.accentPrimary
-                                            : V2Colors.borderSubtle,
-                                      ),
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Icon(
-                                          cat.icon,
-                                          size: 15,
-                                          color: selected
-                                              ? V2Colors.accentPrimary
-                                              : V2Colors.textSecondary,
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          cat.label,
-                                          style: TextStyle(
-                                            color: selected
-                                                ? V2Colors.textPrimary
-                                                : V2Colors.textSecondary,
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Custom Numpad (4 rows x 3 cols)
-                          _NumpadRow(
-                            keys: const ['1', '2', '3'],
-                            config: c,
-                            onKeyTap: _onKeyTap,
-                          ),
-                          SizedBox(height: c.keyGap),
-                          _NumpadRow(
-                            keys: const ['4', '5', '6'],
-                            config: c,
-                            onKeyTap: _onKeyTap,
-                          ),
-                          SizedBox(height: c.keyGap),
-                          _NumpadRow(
-                            keys: const ['7', '8', '9'],
-                            config: c,
-                            onKeyTap: _onKeyTap,
-                          ),
-                          SizedBox(height: c.keyGap),
-                          _NumpadRow(
-                            keys: const ['.000', '0', 'back'],
-                            config: c,
-                            onKeyTap: _onKeyTap,
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Primary CTA
-                          InkWell(
-                            onTap: _rawDigits.isEmpty
-                                ? null
-                                : () {
-                                    Navigator.pop(context);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Saved ${_categories[_selectedCategory].label}: Rp $formatted',
-                                        ),
-                                        duration: const Duration(seconds: 2),
-                                      ),
-                                    );
-                                  },
-                            borderRadius: BorderRadius.circular(999),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 180),
-                              height: c.ctaHeight,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                color: _rawDigits.isEmpty
-                                    ? V2Colors.surfaceElevated
-                                    : V2Colors.accentPrimary,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              alignment: Alignment.center,
-                              child: Text(
-                                'Save Expense',
-                                style: TextStyle(
-                                  color: _rawDigits.isEmpty
-                                      ? V2Colors.textMuted
-                                      : V2Colors.bgPrimary,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: V2Colors.textPrimary,
+                        size: 20,
                       ),
                     ),
-                  ],
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: V2Colors.surfaceCard,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: V2Colors.borderSubtle),
+                    ),
+                    child: const Text(
+                      'Today',
+                      style: TextStyle(
+                        color: V2Colors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Spacer(),
+
+            // Circle Icon-Only Categories above Numpad Sheet
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _selectedCategory == null
+                        ? 'Choose category'
+                        : 'Category: ${_categories[_selectedCategory!].label}',
+                    style: V2Typography.cardTitle(size: 14),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 52,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _categories.length,
+                      separatorBuilder: (_, _) => const SizedBox(width: 10),
+                      itemBuilder: (context, index) {
+                        final cat = _categories[index];
+                        final selected = index == _selectedCategory;
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedCategory = selected ? null : index;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            width: 52,
+                            height: 52,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: selected
+                                  ? V2Colors.accentPrimary
+                                  : V2Colors.surfaceCard,
+                              border: Border.all(
+                                color: selected
+                                    ? V2Colors.accentPrimary
+                                    : V2Colors.borderSubtle,
+                              ),
+                            ),
+                            child: Icon(
+                              cat.icon,
+                              size: 22,
+                              color: selected
+                                  ? V2Colors.bgPrimary
+                                  : V2Colors.textSecondary,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 18),
+
+            // Bottom Sheet Container (Nominal + Numpad + CTA)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(
+                horizontalPadding,
+                24,
+                horizontalPadding,
+                16,
+              ),
+              decoration: const BoxDecoration(
+                color: V2Colors.surfaceCard,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(sheetRadius),
                 ),
-                NumpadTunerHud(config: _config),
-              ],
-            );
-          },
+                border: Border(
+                  top: BorderSide(color: V2Colors.borderSubtle),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        'Rp ',
+                        style: V2Typography.displayBalance(size: 24)
+                            .copyWith(color: V2Colors.textMuted),
+                      ),
+                      Text(
+                        formatted,
+                        style: V2Typography.displayBalance(size: amountSize)
+                            .copyWith(
+                          color: _rawDigits.isEmpty
+                              ? V2Colors.textMuted
+                              : V2Colors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Available: Rp 2.135.000',
+                    style: V2Typography.labelMuted(size: 12),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Custom Numpad (4 rows x 3 cols)
+                  _NumpadRow(
+                    keys: const ['1', '2', '3'],
+                    keyHeight: keyHeight,
+                    keyGap: keyGap,
+                    keyRadius: keyRadius,
+                    keyFontSize: keyFontSize,
+                    onKeyTap: _onKeyTap,
+                  ),
+                  const SizedBox(height: keyGap),
+                  _NumpadRow(
+                    keys: const ['4', '5', '6'],
+                    keyHeight: keyHeight,
+                    keyGap: keyGap,
+                    keyRadius: keyRadius,
+                    keyFontSize: keyFontSize,
+                    onKeyTap: _onKeyTap,
+                  ),
+                  const SizedBox(height: keyGap),
+                  _NumpadRow(
+                    keys: const ['7', '8', '9'],
+                    keyHeight: keyHeight,
+                    keyGap: keyGap,
+                    keyRadius: keyRadius,
+                    keyFontSize: keyFontSize,
+                    onKeyTap: _onKeyTap,
+                  ),
+                  const SizedBox(height: keyGap),
+                  _NumpadRow(
+                    keys: const ['.000', '0', 'back'],
+                    keyHeight: keyHeight,
+                    keyGap: keyGap,
+                    keyRadius: keyRadius,
+                    keyFontSize: keyFontSize,
+                    onKeyTap: _onKeyTap,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Primary CTA
+                  InkWell(
+                    onTap: _rawDigits.isEmpty
+                        ? null
+                        : () {
+                            final catName = _selectedCategory == null
+                                ? 'Expense'
+                                : _categories[_selectedCategory!].label;
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Saved $catName: Rp $formatted'),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                    borderRadius: BorderRadius.circular(999),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      height: ctaHeight,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: _rawDigits.isEmpty
+                            ? V2Colors.surfaceElevated
+                            : V2Colors.accentPrimary,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        'Save Expense',
+                        style: TextStyle(
+                          color: _rawDigits.isEmpty
+                              ? V2Colors.textMuted
+                              : V2Colors.bgPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -323,12 +332,18 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
 
 class _NumpadRow extends StatelessWidget {
   final List<String> keys;
-  final NumpadTunerConfig config;
+  final double keyHeight;
+  final double keyGap;
+  final double keyRadius;
+  final double keyFontSize;
   final ValueChanged<String> onKeyTap;
 
   const _NumpadRow({
     required this.keys,
-    required this.config,
+    required this.keyHeight,
+    required this.keyGap,
+    required this.keyRadius,
+    required this.keyFontSize,
     required this.onKeyTap,
   });
 
@@ -340,16 +355,16 @@ class _NumpadRow extends StatelessWidget {
         return Expanded(
           child: Padding(
             padding: EdgeInsets.only(
-              right: index == keys.length - 1 ? 0 : config.keyGap,
+              right: index == keys.length - 1 ? 0 : keyGap,
             ),
             child: InkWell(
               onTap: () => onKeyTap(key),
-              borderRadius: BorderRadius.circular(config.keyRadius),
+              borderRadius: BorderRadius.circular(keyRadius),
               child: Container(
-                height: config.keyHeight,
+                height: keyHeight,
                 decoration: BoxDecoration(
                   color: V2Colors.surfaceElevated,
-                  borderRadius: BorderRadius.circular(config.keyRadius),
+                  borderRadius: BorderRadius.circular(keyRadius),
                   border: Border.all(color: V2Colors.borderSubtle),
                 ),
                 alignment: Alignment.center,
@@ -362,9 +377,7 @@ class _NumpadRow extends StatelessWidget {
                     : Text(
                         key,
                         style: V2Typography.displayBalance(
-                          size: key == '.000'
-                              ? config.keyFontSize * 0.82
-                              : config.keyFontSize,
+                          size: key == '.000' ? keyFontSize * 0.82 : keyFontSize,
                         ).copyWith(fontWeight: FontWeight.w500),
                       ),
               ),
