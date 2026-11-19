@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/v2_tokens.dart';
-import '../ui_tuner_hud.dart';
 
 class V2HeaderGreeting extends StatelessWidget {
-  final HeaderTunerConfig config;
   final String userName;
   final String subtitle;
   final VoidCallback? onBellTap;
@@ -11,8 +9,7 @@ class V2HeaderGreeting extends StatelessWidget {
 
   const V2HeaderGreeting({
     super.key,
-    required this.config,
-    this.userName = 'Martin',
+    this.userName = 'Rayhan.',
     this.subtitle = "Here's your account\ntransactions overview",
     this.onBellTap,
     this.onInboxTap,
@@ -20,74 +17,72 @@ class V2HeaderGreeting extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: config,
-      builder: (_, _) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            config.horizontalPadding,
-            config.topSpacing,
-            config.horizontalPadding,
-            0,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: V2Colors.surfaceElevated,
+                  border: Border.all(color: V2Colors.borderSubtle),
+                ),
+                child: const Icon(
+                  Icons.person,
+                  color: V2Colors.textSecondary,
+                  size: 22,
+                ),
+              ),
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Container(
-                    width: config.avatarSize,
-                    height: config.avatarSize,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: V2Colors.surfaceElevated,
-                      border: Border.all(color: V2Colors.borderSubtle),
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      color: V2Colors.textSecondary,
-                      size: 20,
-                    ),
+                  _CircleIconButton(
+                    size: 48,
+                    icon: Icons.notifications_none_rounded,
+                    onTap: onBellTap,
                   ),
-                  Row(
-                    children: [
-                      _CircleIconButton(
-                        size: config.iconButtonSize,
-                        icon: Icons.notifications_none_rounded,
-                        onTap: onBellTap,
-                      ),
-                      const SizedBox(width: 8),
-                      _CircleIconButton(
-                        size: config.iconButtonSize,
-                        icon: Icons.mail_outline_rounded,
-                        hasBadge: true,
-                        onTap: onInboxTap,
-                      ),
-                    ],
+                  const SizedBox(width: 8),
+                  _CircleIconButton(
+                    size: 48,
+                    icon: Icons.mail_outline_rounded,
+                    hasBadge: true,
+                    onTap: onInboxTap,
                   ),
                 ],
               ),
-              SizedBox(height: config.greetingGap),
-              Text(
-                'Hello, $userName',
-                style: V2Typography.headlineGreeting(
-                  size: config.greetingSize,
-                  color: V2Colors.accentPrimary,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: V2Typography.headlineGreeting(
-                  size: config.subtitleSize,
-                  color: V2Colors.textPrimary,
-                ),
-              ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 16),
+          ShaderMask(
+            blendMode: BlendMode.srcIn,
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: [V2Colors.accentPrimary, V2Colors.textPrimary],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ).createShader(bounds),
+            child: Text(
+              'Hello, $userName',
+              style: V2Typography.headlineGreeting(
+                size: 22,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: V2Typography.headlineGreeting(
+              size: 28,
+              color: V2Colors.textPrimary,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -121,7 +116,7 @@ class _CircleIconButton extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Icon(icon, color: V2Colors.textPrimary, size: 18),
+            Icon(icon, color: V2Colors.textPrimary, size: 20),
             if (hasBadge)
               Positioned(
                 top: size * 0.24,
