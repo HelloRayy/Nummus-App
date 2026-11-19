@@ -49,7 +49,7 @@ class V2SpendingTrackerCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Monthly spending tracker',
+                    'Weekly spending tracker',
                     style: V2Typography.cardTitle(size: titleSize),
                   ),
                   const Icon(

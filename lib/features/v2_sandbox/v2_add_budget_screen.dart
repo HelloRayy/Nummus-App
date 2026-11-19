@@ -326,8 +326,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
   Widget _buildStep2SetLimit() {
     final addedAmount = int.tryParse(_addBudgetDigits) ?? 0;
     final now = DateTime.now();
-    final daysInMonth = DateTime(now.year, now.month + 1, 0).day;
-    final remainingDays = (daysInMonth - now.day + 1).clamp(1, 31);
+    final remainingDays = (8 - now.weekday).clamp(1, 7);
     final dailyLimit = (_monthlyLimit / remainingDays).round();
 
     return Padding(
@@ -336,14 +335,14 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Set Monthly Limit',
+            'Set Weekly Limit',
             style: V2Typography.headlineGreeting(size: 26),
           ),
           const SizedBox(height: 6),
           Text(
             addedAmount > 0
-                ? 'Added +Rp ${_formatRupiah(addedAmount)} to your budget.'
-                : 'Adjust your monthly spending limit below.',
+                ? 'Added +Rp ${_formatRupiah(addedAmount)} to this week.'
+                : 'Adjust your weekly spending limit (Mon - Sun).',
             style: V2Typography.labelMuted(size: 13),
           ),
           const SizedBox(height: 24),
@@ -361,7 +360,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Monthly Spending Limit',
+                  'Weekly Spending Limit',
                   style: V2Typography.labelMuted(size: 12),
                 ),
                 const SizedBox(height: 8),
