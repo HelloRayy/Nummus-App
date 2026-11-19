@@ -162,60 +162,63 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
     final addedAmount = int.tryParse(_addBudgetDigits) ?? 0;
     final formatted = _formatRupiah(addedAmount);
 
-    return Column(
-      children: [
-        const Spacer(),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(
-            horizontalPadding,
-            24,
-            horizontalPadding,
-            16,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        horizontalPadding,
+        20,
+        horizontalPadding,
+        16,
+      ),
+      child: Column(
+        children: [
+          Text(
+            'How much do you want to add?',
+            textAlign: TextAlign.center,
+            style: V2Typography.headlineGreeting(size: 22),
           ),
-          decoration: const BoxDecoration(
-            color: V2Colors.surfaceCard,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(sheetRadius),
+          const SizedBox(height: 6),
+          Text(
+            'Enter the amount to top up your monthly budget.',
+            textAlign: TextAlign.center,
+            style: V2Typography.labelMuted(size: 13),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Enter Amount',
+            style: V2Typography.labelMuted(size: 12),
+          ),
+          const SizedBox(height: 10),
+          Container(
+            width: double.infinity,
+            height: 96,
+            decoration: BoxDecoration(
+              color: V2Colors.surfaceCard,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: V2Colors.borderSubtle),
             ),
-            border: Border(
-              top: BorderSide(color: V2Colors.borderSubtle),
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  'Rp ',
+                  style: V2Typography.displayBalance(size: 22)
+                      .copyWith(color: V2Colors.textMuted),
+                ),
+                Text(
+                  formatted,
+                  style: V2Typography.displayBalance(size: 40).copyWith(
+                    color: addedAmount == 0
+                        ? V2Colors.textMuted
+                        : V2Colors.textPrimary,
+                  ),
+                ),
+              ],
             ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Add Budget',
-                style: V2Typography.cardTitle(size: 16),
-              ),
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
-                children: [
-                  Text(
-                    'Rp ',
-                    style: V2Typography.displayBalance(size: 24)
-                        .copyWith(color: V2Colors.textMuted),
-                  ),
-                  Text(
-                    formatted,
-                    style: V2Typography.displayBalance(size: amountSize).copyWith(
-                      color: addedAmount == 0
-                          ? V2Colors.textMuted
-                          : V2Colors.textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Current balance: Rp 2.135.000',
-                style: V2Typography.labelMuted(size: 12),
-              ),
-              const SizedBox(height: 20),
+          const Spacer(),
 
               // Custom Numpad
               _NumpadRow(
@@ -317,8 +320,8 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
               ),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
