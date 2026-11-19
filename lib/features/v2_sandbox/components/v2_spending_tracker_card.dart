@@ -1,132 +1,127 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/v2_tokens.dart';
-import '../spending_tuner_hud.dart';
 
 class V2SpendingTrackerCard extends StatelessWidget {
-  final SpendingTunerConfig config;
   final String availableText;
   final String limitText;
+  final double progress;
 
   const V2SpendingTrackerCard({
     super.key,
-    required this.config,
     this.availableText = '\$2135.00',
     this.limitText = '\$3,280.45',
+    this.progress = 0.58,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: config,
-      builder: (_, _) {
-        final c = config;
-        final totalBars = c.barCount.round();
-        final thumbIndex = (totalBars * c.progress).round().clamp(0, totalBars - 1);
+    const int totalBars = 32;
+    const double cardRadius = 32.0;
+    const double cardPadding = 16.2;
+    const double titleSize = 16.1;
+    const double barHeight = 36.5;
+    const double barGap = 3.9;
+    const double barRadius = 6.0;
+    const double thumbWidth = 8.2;
+    const double thumbExtraHeight = 8.0;
+    const double amountSize = 24.4;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Container(
-            padding: EdgeInsets.all(c.cardPadding),
-            decoration: BoxDecoration(
-              color: V2Colors.surfaceCard,
-              borderRadius: BorderRadius.circular(c.cardRadius),
-              border: Border.all(color: V2Colors.borderSubtle),
+    final thumbIndex = (totalBars * progress).round().clamp(0, totalBars - 1);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Container(
+        padding: const EdgeInsets.all(cardPadding),
+        decoration: BoxDecoration(
+          color: V2Colors.surfaceCard,
+          borderRadius: BorderRadius.circular(cardRadius),
+          border: Border.all(color: V2Colors.borderSubtle),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Monthly spending tracker',
+              style: V2Typography.cardTitle(size: titleSize),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Monthly spending tracker',
-                  style: V2Typography.cardTitle(size: c.titleSize),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Monitor your spending and stay on track and make sure you stay within your planned spending limit.',
-                  style: TextStyle(
-                    fontSize: c.descSize,
-                    color: V2Colors.textMuted,
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  height: c.barHeight + c.thumbExtraHeight,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: List.generate(totalBars, (index) {
-                      final isThumb = index == thumbIndex;
-                      final t = index / (totalBars - 1).clamp(1, 999);
-                      final barColor = _segmentColor(t, isAfterThumb: index > thumbIndex);
+            const SizedBox(height: 16),
+            SizedBox(
+              height: barHeight + thumbExtraHeight,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: List.generate(totalBars, (index) {
+                  final isThumb = index == thumbIndex;
+                  final t = index / (totalBars - 1);
+                  final barColor =
+                      _segmentColor(t, isAfterThumb: index > thumbIndex);
 
-                      if (isThumb) {
-                        return Container(
-                          width: c.thumbWidth,
-                          height: c.barHeight + c.thumbExtraHeight,
-                          margin: EdgeInsets.only(
-                            right: index == totalBars - 1 ? 0 : c.barGap,
-                          ),
-                          decoration: BoxDecoration(
-                            color: V2Colors.textPrimary,
-                            borderRadius: BorderRadius.circular(c.barRadius + 1),
-                          ),
-                        );
-                      }
+                  if (isThumb) {
+                    return Container(
+                      width: thumbWidth,
+                      height: barHeight + thumbExtraHeight,
+                      margin: EdgeInsets.only(
+                        right: index == totalBars - 1 ? 0 : barGap,
+                      ),
+                      decoration: BoxDecoration(
+                        color: V2Colors.textPrimary,
+                        borderRadius: BorderRadius.circular(barRadius + 1),
+                      ),
+                    );
+                  }
 
-                      return Expanded(
-                        child: Container(
-                          height: c.barHeight,
-                          margin: EdgeInsets.only(
-                            right: index == totalBars - 1 ? 0 : c.barGap,
-                          ),
-                          decoration: BoxDecoration(
-                            color: barColor,
-                            borderRadius: BorderRadius.circular(c.barRadius),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Available this month',
-                          style: V2Typography.labelMuted(),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          availableText,
-                          style: V2Typography.displayBalance(size: c.amountSize)
-                              .copyWith(color: V2Colors.semanticPositive),
-                        ),
-                      ],
+                  return Expanded(
+                    child: Container(
+                      height: barHeight,
+                      margin: EdgeInsets.only(
+                        right: index == totalBars - 1 ? 0 : barGap,
+                      ),
+                      decoration: BoxDecoration(
+                        color: barColor,
+                        borderRadius: BorderRadius.circular(barRadius),
+                      ),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'Spending limit',
-                          style: V2Typography.labelMuted(),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          limitText,
-                          style: V2Typography.displayBalance(size: c.amountSize),
-                        ),
-                      ],
+                  );
+                }),
+              ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Available this month',
+                      style: V2Typography.labelMuted(),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      availableText,
+                      style: V2Typography.displayBalance(size: amountSize)
+                          .copyWith(color: V2Colors.semanticPositive),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      'Spending limit',
+                      style: V2Typography.labelMuted(),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      limitText,
+                      style: V2Typography.displayBalance(size: amountSize),
                     ),
                   ],
                 ),
               ],
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 
