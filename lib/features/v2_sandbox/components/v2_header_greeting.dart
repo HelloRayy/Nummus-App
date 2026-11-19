@@ -58,19 +58,11 @@ class V2HeaderGreeting extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
-          ShaderMask(
-            blendMode: BlendMode.srcIn,
-            shaderCallback: (bounds) => const LinearGradient(
-              colors: [V2Colors.accentPrimary, V2Colors.textPrimary],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ).createShader(bounds),
-            child: Text(
-              'Hello, $userName',
-              style: V2Typography.headlineGreeting(
-                size: 22,
-                color: Colors.white,
-              ),
+          Text(
+            'Hello, $userName',
+            style: V2Typography.headlineGreeting(
+              size: 22,
+              color: const Color(0xFF60A5FA),
             ),
           ),
           const SizedBox(height: 4),
