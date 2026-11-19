@@ -114,6 +114,45 @@ class V2SandboxScreen extends StatelessWidget {
                   onMenuSelect: (item) {
                     if (item == 'Budget') {
                       _openAddBudget(context);
+                    } else if (item == 'Settings') {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          backgroundColor: V2Colors.surfaceCard,
+                          title: const Text(
+                            'Reset All Data?',
+                            style: TextStyle(color: V2Colors.textPrimary),
+                          ),
+                          content: const Text(
+                            'Semua pengeluaran dan budget minggu ini akan di-reset ke Rp 0.',
+                            style: TextStyle(color: V2Colors.textSecondary),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(color: V2Colors.textSecondary),
+                              ),
+                            ),
+                            FilledButton(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: V2Colors.semanticDanger,
+                              ),
+                              onPressed: () async {
+                                await repository.resetAllExpenses();
+                                await repository.updateBudget(
+                                  weeklyIncome: 0,
+                                  weeklySavingsTarget: 0,
+                                );
+                                if (!ctx.mounted) return;
+                                Navigator.pop(ctx);
+                              },
+                              child: const Text('Reset to 0'),
+                            ),
+                          ],
+                        ),
+                      );
                     }
                   },
                 ),
