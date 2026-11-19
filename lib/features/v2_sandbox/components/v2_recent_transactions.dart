@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/v2_tokens.dart';
+import '../../budget/models/expense_model.dart';
 
 class V2RecentTransactions extends StatelessWidget {
-  const V2RecentTransactions({super.key});
+  final List<ExpenseModel> expenses;
+  final String Function(int amount) formatRp;
+
+  const V2RecentTransactions({
+    super.key,
+    required this.expenses,
+    required this.formatRp,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -15,32 +23,7 @@ class V2RecentTransactions extends StatelessWidget {
     const double subSize = 11.6;
     const double amountSize = 18.9;
 
-    const items = [
-      _TxItem(
-        icon: Icons.coffee_rounded,
-        iconBg: Color(0xFF1E3A2F),
-        iconColor: V2Colors.semanticPositive,
-        title: 'Starbucks Coffee',
-        category: 'Food & Drinks',
-        amount: '-\$6.40',
-      ),
-      _TxItem(
-        icon: Icons.directions_car_rounded,
-        iconBg: Color(0xFF1F222A),
-        iconColor: V2Colors.textPrimary,
-        title: 'Uber Ride',
-        category: 'Transport',
-        amount: '-\$9.30',
-      ),
-      _TxItem(
-        icon: Icons.shopping_bag_rounded,
-        iconBg: Color(0xFF2D2218),
-        iconColor: V2Colors.semanticWarning,
-        title: 'Grocery Market',
-        category: 'Groceries',
-        amount: '-\$42.80',
-      ),
-    ];
+    final recent = expenses.take(3).toList();
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: horizontalPadding),
@@ -63,83 +46,117 @@ class V2RecentTransactions extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Container(
+            width: double.infinity,
             padding: const EdgeInsets.all(cardPadding),
             decoration: BoxDecoration(
               color: V2Colors.surfaceCard,
               borderRadius: BorderRadius.circular(cardRadius),
               border: Border.all(color: V2Colors.borderSubtle),
             ),
-            child: Column(
-              children: List.generate(items.length, (index) {
-                final item = items[index];
-                return Padding(
-                  padding: EdgeInsets.only(
-                    bottom: index == items.length - 1 ? 0 : itemGap,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: iconSize,
-                        height: iconSize,
-                        decoration: BoxDecoration(
-                          color: item.iconBg,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          item.icon,
-                          color: item.iconColor,
-                          size: iconSize * 0.48,
-                        ),
+            child: recent.isEmpty
+                ? Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Center(
+                      child: Text(
+                        'No transactions this week yet',
+                        style: V2Typography.labelMuted(size: 13),
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    ),
+                  )
+                : Column(
+                    children: List.generate(recent.length, (index) {
+                      final item = recent[index];
+                      final cat = item.categoryId ?? 'Expense';
+                      final title = item.note.isNotEmpty ? item.note : cat;
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: index == recent.length - 1 ? 0 : itemGap,
+                        ),
+                        child: Row(
                           children: [
-                            Text(
-                              item.title,
-                              style: V2Typography.cardTitle(size: titleSize)
-                                  .copyWith(fontWeight: FontWeight.w500),
+                            Container(
+                              width: iconSize,
+                              height: iconSize,
+                              decoration: BoxDecoration(
+                                color: _iconBg(cat),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(
+                                _iconData(cat),
+                                color: _iconColor(cat),
+                                size: iconSize * 0.48,
+                              ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    style: V2Typography.cardTitle(size: titleSize)
+                                        .copyWith(fontWeight: FontWeight.w500),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    cat,
+                                    style: V2Typography.labelMuted(size: subSize),
+                                  ),
+                                ],
+                              ),
+                            ),
                             Text(
-                              item.category,
-                              style: V2Typography.labelMuted(size: subSize),
+                              '-${formatRp(item.amount)}',
+                              style: V2Typography.displayBalance(size: amountSize)
+                                  .copyWith(fontWeight: FontWeight.w500),
                             ),
                           ],
                         ),
-                      ),
-                      Text(
-                        item.amount,
-                        style: V2Typography.displayBalance(size: amountSize)
-                            .copyWith(fontWeight: FontWeight.w500),
-                      ),
-                    ],
+                      );
+                    }),
                   ),
-                );
-              }),
-            ),
           ),
         ],
       ),
     );
   }
-}
 
-class _TxItem {
-  final IconData icon;
-  final Color iconBg;
-  final Color iconColor;
-  final String title;
-  final String category;
-  final String amount;
+  IconData _iconData(String cat) {
+    switch (cat.toLowerCase()) {
+      case 'food':
+        return Icons.restaurant_rounded;
+      case 'coffee':
+        return Icons.coffee_rounded;
+      case 'transport':
+        return Icons.directions_car_rounded;
+      case 'grocery':
+        return Icons.shopping_bag_rounded;
+      default:
+        return Icons.receipt_long_rounded;
+    }
+  }
 
-  const _TxItem({
-    required this.icon,
-    required this.iconBg,
-    required this.iconColor,
-    required this.title,
-    required this.category,
-    required this.amount,
-  });
+  Color _iconBg(String cat) {
+    switch (cat.toLowerCase()) {
+      case 'coffee':
+        return const Color(0xFF1E3A2F);
+      case 'grocery':
+        return const Color(0xFF2D2218);
+      default:
+        return const Color(0xFF1F222A);
+    }
+  }
+
+  Color _iconColor(String cat) {
+    switch (cat.toLowerCase()) {
+      case 'coffee':
+        return V2Colors.semanticPositive;
+      case 'grocery':
+        return V2Colors.semanticWarning;
+      default:
+        return V2Colors.textPrimary;
+    }
+  }
 }

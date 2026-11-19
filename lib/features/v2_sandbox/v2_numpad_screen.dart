@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/v2_tokens.dart';
+import '../budget/repository/budget_repository.dart';
 
 class V2NumpadScreen extends StatefulWidget {
-  const V2NumpadScreen({super.key});
+  final BudgetRepository repository;
+  final String availableText;
+
+  const V2NumpadScreen({
+    super.key,
+    required this.repository,
+    required this.availableText,
+  });
 
   @override
   State<V2NumpadScreen> createState() => _V2NumpadScreenState();
@@ -174,7 +182,7 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Available: Rp 2.135.000',
+                    'Available: ${widget.availableText}',
                     style: V2Typography.labelMuted(size: 12),
                   ),
                   const SizedBox(height: 16),
@@ -266,14 +274,24 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                   InkWell(
                     onTap: _rawDigits.isEmpty
                         ? null
-                        : () {
+                        : () async {
+                            final amount = int.tryParse(_rawDigits) ?? 0;
+                            if (amount <= 0) return;
                             final catName = _selectedCategory == null
-                                ? 'Expense'
+                                ? null
                                 : _categories[_selectedCategory!].label;
+                            await widget.repository.addExpense(
+                              amount,
+                              categoryId: catName,
+                              note: catName ?? 'Expense',
+                            );
+                            if (!context.mounted) return;
                             Navigator.pop(context);
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Saved $catName: Rp $formatted'),
+                                content: Text(
+                                  'Saved ${catName ?? 'Expense'}: Rp $formatted',
+                                ),
                                 duration: const Duration(seconds: 2),
                               ),
                             );

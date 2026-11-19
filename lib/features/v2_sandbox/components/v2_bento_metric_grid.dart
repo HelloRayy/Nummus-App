@@ -2,53 +2,66 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/v2_tokens.dart';
 
 class V2BentoMetricGrid extends StatelessWidget {
-  const V2BentoMetricGrid({super.key});
+  final String spentText;
+  final String lastPurchaseText;
+  final String lastPurchaseCategory;
+  final String usedPercentText;
+  final String dayBudgetText;
+
+  const V2BentoMetricGrid({
+    super.key,
+    required this.spentText,
+    required this.lastPurchaseText,
+    required this.lastPurchaseCategory,
+    required this.usedPercentText,
+    required this.dayBudgetText,
+  });
 
   @override
   Widget build(BuildContext context) {
     const double horizontalPadding = 15.9;
     const double gridGap = 8.2;
 
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: Column(
         children: [
           Row(
             children: [
               Expanded(
                 child: _BentoCard(
-                  title: 'Weekly trend',
-                  value: '+12% ↑',
+                  title: 'Spent this week',
+                  value: spentText,
                   valueColor: V2Colors.semanticPositive,
-                  subLabel: 'More than last week',
+                  subLabel: 'Total expenses',
                 ),
               ),
-              SizedBox(width: gridGap),
+              const SizedBox(width: gridGap),
               Expanded(
                 child: _BentoCard(
                   title: 'Last purchase',
-                  value: '- \$24.90',
+                  value: lastPurchaseText,
                   valueColor: V2Colors.semanticWarning,
-                  subLabel: 'Grocery',
+                  subLabel: lastPurchaseCategory,
                 ),
               ),
             ],
           ),
-          SizedBox(height: gridGap),
+          const SizedBox(height: gridGap),
           Row(
             children: [
               Expanded(
                 child: _BentoCard(
-                  title: 'Credit',
-                  value: '23%',
+                  title: 'Used',
+                  value: usedPercentText,
                   valueColor: V2Colors.accentPrimary,
                 ),
               ),
-              SizedBox(width: gridGap),
+              const SizedBox(width: gridGap),
               Expanded(
                 child: _BentoCard(
                   title: 'Day budget',
-                  value: '\$42',
+                  value: dayBudgetText,
                   valueColor: V2Colors.accentPrimary,
                 ),
               ),
@@ -99,10 +112,14 @@ class _BentoCard extends StatelessWidget {
                 .copyWith(fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: titleValueGap),
-          Text(
-            value,
-            style: V2Typography.displayBalance(size: valueSize)
-                .copyWith(color: valueColor),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: V2Typography.displayBalance(size: valueSize)
+                  .copyWith(color: valueColor),
+            ),
           ),
           if (subLabel != null) ...[
             const SizedBox(height: valueSubGap),

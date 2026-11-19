@@ -7,8 +7,8 @@ import 'core/services/app_settings_controller.dart';
 import 'core/services/native_bridge.dart';
 import 'core/theme/theme_controller.dart';
 import 'features/budget/repository/budget_repository.dart';
-import 'features/dashboard/dashboard_screen.dart';
 import 'features/quick_log/quick_log_dialog.dart';
+import 'features/v2_sandbox/v2_sandbox_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -122,7 +122,7 @@ class _JajanAppState extends State<JajanApp> {
             ),
             fontFamily: 'Inter',
           ),
-          home: DashboardScreen(repository: widget.repository),
+          home: V2SandboxScreen(repository: widget.repository),
         );
       },
     );

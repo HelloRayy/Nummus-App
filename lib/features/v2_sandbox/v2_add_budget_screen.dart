@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/v2_tokens.dart';
+import '../budget/repository/budget_repository.dart';
 
 class V2AddBudgetScreen extends StatefulWidget {
-  const V2AddBudgetScreen({super.key});
+  final BudgetRepository repository;
+
+  const V2AddBudgetScreen({super.key, required this.repository});
 
   @override
   State<V2AddBudgetScreen> createState() => _V2AddBudgetScreenState();
@@ -17,7 +20,16 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
   String _addBudgetDigits = '';
 
   // Step 2: Set Limit
-  double _monthlyLimit = 3280000;
+  late double _monthlyLimit;
+
+  @override
+  void initState() {
+    super.initState();
+    final current = widget.repository.spendableBudget;
+    _monthlyLimit = (current >= 500000 && current <= 15000000)
+        ? current.toDouble()
+        : 3280000;
+  }
 
   @override
   void dispose() {
@@ -151,8 +163,6 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
 
   Widget _buildStep1AddBudget() {
     const double horizontalPadding = 12.2;
-    const double sheetRadius = 40.0;
-    const double amountSize = 58.0;
     const double keyHeight = 60.5;
     const double keyGap = 6.0;
     const double keyRadius = 28.0;
@@ -428,7 +438,15 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
 
           // Save & Finish CTA
           InkWell(
-            onTap: () {
+            onTap: () async {
+              if (addedAmount > 0) {
+                await widget.repository.addTopUp(addedAmount);
+              }
+              await widget.repository.updateBudget(
+                weeklyIncome: _monthlyLimit.round(),
+                weeklySavingsTarget: widget.repository.weeklySavingsTarget,
+              );
+              if (!context.mounted) return;
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
