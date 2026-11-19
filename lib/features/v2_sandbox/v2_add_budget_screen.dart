@@ -38,6 +38,12 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
   }
 
   void _goToStep(int step) {
+    if (step == 1) {
+      final added = int.tryParse(_addBudgetDigits) ?? 0;
+      final current = widget.repository.remainingWeeklySpendable;
+      final total = (current > 0 ? current : 0) + added;
+      _monthlyLimit = total.toDouble();
+    }
     setState(() => _currentStep = step);
     _pageController.animateToPage(
       step,
@@ -335,9 +341,15 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
 
   Widget _buildStep2SetLimit() {
     final addedAmount = int.tryParse(_addBudgetDigits) ?? 0;
+    final currentAvailable = widget.repository.remainingWeeklySpendable;
+    final totalPool = (currentAvailable > 0 ? currentAvailable : 0) + addedAmount;
+    final maxSlider = (totalPool > 0 ? totalPool : 1000000).toDouble();
+    final activeLimit = _monthlyLimit.clamp(0.0, maxSlider);
+
     final now = DateTime.now();
     final remainingDays = (8 - now.weekday).clamp(1, 7);
-    final dailyLimit = (_monthlyLimit / remainingDays).round();
+    final dailyLimit = (activeLimit / remainingDays).round();
+    final savings = (totalPool - activeLimit.round()).clamp(0, totalPool);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
@@ -351,8 +363,8 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
           const SizedBox(height: 6),
           Text(
             addedAmount > 0
-                ? 'Added +Rp ${_formatRupiah(addedAmount)} to this week.'
-                : 'Adjust your weekly spending limit (Mon - Sun).',
+                ? 'Total budget: Rp ${_formatRupiah(totalPool)} (+Rp ${_formatRupiah(addedAmount)})'
+                : 'Total budget: Rp ${_formatRupiah(totalPool)}',
             style: V2Typography.labelMuted(size: 13),
           ),
           const SizedBox(height: 24),
@@ -375,7 +387,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Rp ${_formatRupiah(_monthlyLimit.round())}',
+                  'Rp ${_formatRupiah(activeLimit.round())}',
                   style: V2Typography.displayBalance(size: 34),
                 ),
                 const SizedBox(height: 16),
@@ -386,10 +398,9 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                         const RoundSliderThumbShape(enabledThumbRadius: 10),
                   ),
                   child: Slider(
-                    value: _monthlyLimit,
-                    min: 500000,
-                    max: 15000000,
-                    divisions: 145,
+                    value: activeLimit,
+                    min: 0,
+                    max: maxSlider,
                     activeColor: V2Colors.accentPrimary,
                     inactiveColor: V2Colors.borderSubtle,
                     onChanged: (v) => setState(() => _monthlyLimit = v),
@@ -403,7 +414,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Daily budget ($remainingDays days left)',
+                          'Max per hari ($remainingDays hari sisa)',
                           style: V2Typography.labelMuted(size: 12),
                         ),
                         const SizedBox(height: 4),
@@ -418,13 +429,14 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          'Weekly avg',
+                          'Saved',
                           style: V2Typography.labelMuted(size: 12),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Rp ${_formatRupiah(dailyLimit * 7)}',
-                          style: V2Typography.displayBalance(size: 16),
+                          'Rp ${_formatRupiah(savings)}',
+                          style: V2Typography.displayBalance(size: 16)
+                              .copyWith(color: V2Colors.semanticPositive),
                         ),
                       ],
                     ),
