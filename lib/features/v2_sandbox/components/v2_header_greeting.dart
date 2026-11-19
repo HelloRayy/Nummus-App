@@ -62,7 +62,7 @@ class V2HeaderGreeting extends StatelessWidget {
             'Hello, $userName',
             style: V2Typography.headlineGreeting(
               size: 22,
-              color: const Color(0xFF60A5FA),
+              color: V2Colors.accentPrimary,
             ),
           ),
           const SizedBox(height: 4),
