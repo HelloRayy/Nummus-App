@@ -76,7 +76,7 @@ class V2SandboxScreen extends StatelessWidget {
                       const SizedBox(height: 20),
                       V2SpendingTrackerCard(
                         availableText: availableFormatted,
-                        limitText: _formatRp(limit),
+                        limitText: _formatRp(dayBudget),
                         progress: progress,
                         onTap: () => _openAddBudget(context),
                       ),

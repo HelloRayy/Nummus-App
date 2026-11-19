@@ -348,7 +348,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
 
     final now = DateTime.now();
     final remainingDays = (8 - now.weekday).clamp(1, 7);
-    final dailyLimit = (activeLimit / remainingDays).round();
+    final dailyLimit = ((activeLimit / remainingDays) / 1000).round() * 1000;
     final savings = (totalPool - activeLimit.round()).clamp(0, totalPool);
 
     return Padding(
@@ -403,7 +403,10 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                     max: maxSlider,
                     activeColor: V2Colors.accentPrimary,
                     inactiveColor: V2Colors.borderSubtle,
-                    onChanged: (v) => setState(() => _monthlyLimit = v),
+                    onChanged: (v) {
+                      final snapped = ((v / 1000).round() * 1000).toDouble();
+                      setState(() => _monthlyLimit = snapped);
+                    },
                   ),
                 ),
                 const Divider(color: V2Colors.borderSubtle, height: 28),

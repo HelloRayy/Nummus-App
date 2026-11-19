@@ -136,7 +136,7 @@ class V2SpendingTrackerCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'Weekly limit',
+                      'Day budget',
                       style: V2Typography.labelMuted(),
                     ),
                     const SizedBox(height: 4),
