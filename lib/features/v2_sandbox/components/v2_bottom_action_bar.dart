@@ -80,13 +80,15 @@ class _V2BottomActionBarState extends State<V2BottomActionBar>
           SizeTransition(
             sizeFactor: _expandAnim,
             axisAlignment: 1.0,
-            child: FadeTransition(
-              opacity: _expandAnim,
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 0.92, end: 1.0).animate(_expandAnim),
-                alignment: Alignment.bottomRight,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+            child: Align(
+              alignment: Alignment.bottomRight,
+              child: FadeTransition(
+                opacity: _expandAnim,
+                child: ScaleTransition(
+                  scale: Tween<double>(begin: 0.92, end: 1.0).animate(_expandAnim),
+                  alignment: Alignment.bottomRight,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                   children: _menuItems.map((item) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: menuItemGap),
@@ -128,6 +130,7 @@ class _V2BottomActionBarState extends State<V2BottomActionBar>
                       ),
                     );
                   }).toList(),
+                  ),
                 ),
               ),
             ),
