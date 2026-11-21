@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/v2_tokens.dart';
 import '../budget/repository/budget_repository.dart';
+import 'motion_tuner_hud.dart';
 
 class V2NumpadScreen extends StatefulWidget {
   final BudgetRepository repository;
@@ -18,7 +20,10 @@ class V2NumpadScreen extends StatefulWidget {
 }
 
 class _V2NumpadScreenState extends State<V2NumpadScreen> {
+  final MotionTunerConfig _motionConfig = MotionTunerConfig();
+  Timer? _debounceTimer;
   String _rawDigits = '';
+  int _debouncedTyped = 0;
   int? _selectedCategory;
 
   static const _categories = [
@@ -28,6 +33,26 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
     (label: 'Grocery', icon: Icons.shopping_bag_rounded),
   ];
 
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    _motionConfig.dispose();
+    super.dispose();
+  }
+
+  void _scheduleAvailableUpdate() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(
+      Duration(milliseconds: _motionConfig.debounceMs.round()),
+      () {
+        if (!mounted) return;
+        setState(() {
+          _debouncedTyped = int.tryParse(_rawDigits) ?? 0;
+        });
+      },
+    );
+  }
+
   void _onKeyTap(String key) {
     HapticFeedback.lightImpact();
     setState(() {
@@ -35,22 +60,21 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
         if (_rawDigits.isNotEmpty) {
           _rawDigits = _rawDigits.substring(0, _rawDigits.length - 1);
         }
-        return;
-      }
-      if (key == '.000') {
-        if (_rawDigits.isEmpty || _rawDigits == '0') return;
-        if (_rawDigits.length + 3 <= 12) {
+      } else if (key == '.000') {
+        if (_rawDigits.isNotEmpty &&
+            _rawDigits != '0' &&
+            _rawDigits.length + 3 <= 12) {
           _rawDigits += '000';
         }
-        return;
-      }
-      if (_rawDigits.length >= 12) return;
-      if (_rawDigits == '0') {
-        _rawDigits = key;
-      } else {
-        _rawDigits += key;
+      } else if (_rawDigits.length < 12) {
+        if (_rawDigits == '0') {
+          _rawDigits = key;
+        } else {
+          _rawDigits += key;
+        }
       }
     });
+    _scheduleAvailableUpdate();
   }
 
   String _formatRupiah(String digits) {
@@ -82,8 +106,10 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
     return Scaffold(
       backgroundColor: V2Colors.bgPrimary,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
+            Column(
+              children: [
             // Top Bar
             Padding(
               padding: const EdgeInsets.fromLTRB(
@@ -225,21 +251,31 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Builder(
-                    builder: (_) {
-                      final typed = int.tryParse(_rawDigits) ?? 0;
-                      final liveAvail =
-                          widget.repository.remainingWeeklySpendable - typed;
-                      final isNeg = liveAvail < 0;
-                      final availStr =
-                          '${isNeg ? '-' : ''}Rp ${_formatRupiah(liveAvail.abs().toString())}';
-                      return Text(
-                        'Available: $availStr',
-                        style: V2Typography.labelMuted(size: 12).copyWith(
-                          color: isNeg
-                              ? V2Colors.semanticDanger
-                              : V2Colors.textMuted,
+                  ListenableBuilder(
+                    listenable: _motionConfig,
+                    builder: (_, _) {
+                      final targetAvail =
+                          widget.repository.remainingWeeklySpendable -
+                              _debouncedTyped;
+                      return TweenAnimationBuilder<int>(
+                        tween: IntTween(begin: targetAvail, end: targetAvail),
+                        duration: Duration(
+                          milliseconds: _motionConfig.rollDurationMs.round(),
                         ),
+                        curve: _motionConfig.curve,
+                        builder: (_, animatedVal, _) {
+                          final isNeg = animatedVal < 0;
+                          final availStr =
+                              '${isNeg ? '-' : ''}Rp ${_formatRupiah(animatedVal.abs().toString())}';
+                          return Text(
+                            'Available: $availStr',
+                            style: V2Typography.labelMuted(size: 12).copyWith(
+                              color: isNeg
+                                  ? V2Colors.semanticDanger
+                                  : V2Colors.textMuted,
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
@@ -329,6 +365,7 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                 ],
               ),
             ),
+            MotionTunerHud(config: _motionConfig),
           ],
         ),
       ),
