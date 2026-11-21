@@ -458,8 +458,8 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                 await widget.repository.addTopUp(addedAmount);
               }
               await widget.repository.updateBudget(
-                weeklyIncome: _monthlyLimit.round(),
-                weeklySavingsTarget: widget.repository.weeklySavingsTarget,
+                weeklyIncome: totalPool,
+                weeklySavingsTarget: savings,
               );
               if (!context.mounted) return;
               Navigator.pop(context);
