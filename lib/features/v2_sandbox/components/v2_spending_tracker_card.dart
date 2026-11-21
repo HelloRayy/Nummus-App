@@ -158,17 +158,12 @@ class V2SpendingTrackerCard extends StatelessWidget {
   Color _segmentColor(double t, {required bool isAfterThumb}) {
     if (!isAfterThumb) {
       return Color.lerp(
-        V2Colors.semanticPositive,
-        const Color(0xFF1E7E58),
+        V2Colors.semanticWarning,
+        V2Colors.semanticDanger,
         t,
       )!;
     }
-    final fade = (1.0 - ((t - 0.4) * 1.1)).clamp(0.18, 1.0);
-    return Color.lerp(
-      const Color(0xFF7D6B22),
-      V2Colors.semanticWarning,
-      ((t - 0.35) * 1.5).clamp(0.0, 1.0),
-    )!
-        .withValues(alpha: fade);
+    final fade = (1.0 - ((t - 0.35) * 0.9)).clamp(0.22, 1.0);
+    return V2Colors.semanticPositive.withValues(alpha: fade);
   }
 }
