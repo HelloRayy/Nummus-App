@@ -16,7 +16,7 @@ class _PlanItem {
     required this.id,
     required this.title,
     required this.amount,
-    this.isSelected = false,
+    this.isSelected = true,
   });
 }
 
