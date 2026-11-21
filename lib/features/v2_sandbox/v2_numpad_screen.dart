@@ -1,0 +1,422 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../core/services/native_bridge.dart';
+import '../../core/theme/v2_tokens.dart';
+import '../budget/repository/budget_repository.dart';
+
+class V2NumpadScreen extends StatefulWidget {
+  final BudgetRepository repository;
+  final String availableText;
+
+  const V2NumpadScreen({
+    super.key,
+    required this.repository,
+    required this.availableText,
+  });
+
+  @override
+  State<V2NumpadScreen> createState() => _V2NumpadScreenState();
+}
+
+class _V2NumpadScreenState extends State<V2NumpadScreen> {
+  Timer? _debounceTimer;
+  String _rawDigits = '';
+  int _debouncedTyped = 0;
+  int? _selectedCategory;
+
+  static const _categories = [
+    (label: 'Food', icon: Icons.restaurant_rounded),
+    (label: 'Coffee', icon: Icons.coffee_rounded),
+    (label: 'Transport', icon: Icons.directions_car_rounded),
+    (label: 'Grocery', icon: Icons.shopping_bag_rounded),
+  ];
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleAvailableUpdate() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(
+      const Duration(milliseconds: 200),
+      () {
+        if (!mounted) return;
+        setState(() {
+          _debouncedTyped = int.tryParse(_rawDigits) ?? 0;
+        });
+      },
+    );
+  }
+
+  void _onKeyTap(String key) {
+    HapticFeedback.lightImpact();
+    setState(() {
+      if (key == 'back') {
+        if (_rawDigits.isNotEmpty) {
+          _rawDigits = _rawDigits.substring(0, _rawDigits.length - 1);
+        }
+      } else if (key == '.000') {
+        if (_rawDigits.isNotEmpty &&
+            _rawDigits != '0' &&
+            _rawDigits.length + 3 <= 12) {
+          _rawDigits += '000';
+        }
+      } else if (_rawDigits.length < 12) {
+        if (_rawDigits == '0') {
+          _rawDigits = key;
+        } else {
+          _rawDigits += key;
+        }
+      }
+    });
+    _scheduleAvailableUpdate();
+  }
+
+  String _formatRupiah(String digits) {
+    if (digits.isEmpty) return '0';
+    final buffer = StringBuffer();
+    for (int i = 0; i < digits.length; i++) {
+      final reverseIndex = digits.length - 1 - i;
+      buffer.write(digits[i]);
+      if (reverseIndex > 0 && reverseIndex % 3 == 0) {
+        buffer.write('.');
+      }
+    }
+    return buffer.toString();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const double horizontalPadding = 12.2;
+    const double sheetRadius = 40.0;
+    const double amountSize = 58.0;
+    const double keyHeight = 60.5;
+    const double keyGap = 6.0;
+    const double keyRadius = 28.0;
+    const double keyFontSize = 19.7;
+    const double ctaHeight = 58.4;
+
+    final formatted = _formatRupiah(_rawDigits);
+
+    return Scaffold(
+      backgroundColor: V2Colors.bgPrimary,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Column(
+              children: [
+            // Top Bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                horizontalPadding,
+                12,
+                horizontalPadding,
+                0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: V2Colors.surfaceCard,
+                        border: Border.all(color: V2Colors.borderSubtle),
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_rounded,
+                        color: V2Colors.textPrimary,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () async {
+                      final amount = int.tryParse(_rawDigits) ?? 0;
+                      if (amount > 0) {
+                        final catName = _selectedCategory == null
+                            ? null
+                            : _categories[_selectedCategory!].label;
+                        await widget.repository.addExpense(
+                          amount,
+                          categoryId: catName,
+                          note: catName ?? 'Expense',
+                        );
+                      }
+                      await NativeBridge.openShopeePay();
+                      if (!context.mounted) return;
+                      Navigator.pop(context);
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 10,
+                      ),
+                      child: Text(
+                        'SPay',
+                        style: TextStyle(
+                          color: _rawDigits.isEmpty
+                              ? V2Colors.semanticWarning
+                              : V2Colors.accentPrimary,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const Spacer(),
+
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Column(
+                children: [
+                  Text(
+                    'Log an expense',
+                    style: V2Typography.headlineGreeting(size: 24),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Every rupiah counts toward your weekly limit.',
+                    textAlign: TextAlign.center,
+                    style: V2Typography.labelMuted(size: 13),
+                  ),
+                ],
+              ),
+            ),
+
+            const Spacer(),
+
+            // Bottom Sheet Container (Nominal + Categories + Numpad + CTA)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(
+                horizontalPadding,
+                24,
+                horizontalPadding,
+                16,
+              ),
+              decoration: const BoxDecoration(
+                color: V2Colors.surfaceCard,
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(sheetRadius),
+                ),
+                border: Border(
+                  top: BorderSide(color: V2Colors.borderSubtle),
+                ),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        'Rp ',
+                        style: V2Typography.displayBalance(size: 24)
+                            .copyWith(color: V2Colors.textMuted),
+                      ),
+                      Text(
+                        formatted,
+                        style: V2Typography.displayBalance(size: amountSize)
+                            .copyWith(
+                          color: _rawDigits.isEmpty
+                              ? V2Colors.textMuted
+                              : V2Colors.textPrimary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Builder(
+                    builder: (_) {
+                      final rawToday = widget.repository.remainingToday;
+                      final baseToday =
+                          rawToday > 0 ? (rawToday ~/ 500) * 500 : rawToday;
+                      final targetDay = baseToday - _debouncedTyped;
+                      return TweenAnimationBuilder<int>(
+                        tween: IntTween(begin: targetDay, end: targetDay),
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeOutQuart,
+                        builder: (_, animatedVal, _) {
+                          final isNeg = animatedVal < 0;
+                          final dayStr =
+                              '${isNeg ? '-' : ''}Rp ${_formatRupiah(animatedVal.abs().toString())}';
+                          return Text(
+                            'Day budget: $dayStr',
+                            style: V2Typography.labelMuted(size: 12).copyWith(
+                              color: isNeg
+                                  ? V2Colors.semanticDanger
+                                  : V2Colors.textMuted,
+                            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Circle Icon-Only Categories (max 4, centered)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(_categories.length, (index) {
+                      final cat = _categories[index];
+                      final selected = index == _selectedCategory;
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          right: index == _categories.length - 1 ? 0 : 14,
+                        ),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedCategory = selected ? null : index;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: selected
+                                  ? V2Colors.accentPrimary
+                                  : V2Colors.surfaceElevated,
+                              border: Border.all(
+                                color: selected
+                                    ? V2Colors.accentPrimary
+                                    : V2Colors.borderSubtle,
+                              ),
+                            ),
+                            child: Icon(
+                              cat.icon,
+                              size: 20,
+                              color: selected
+                                  ? V2Colors.bgPrimary
+                                  : V2Colors.textSecondary,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Custom Numpad (4 rows x 3 cols)
+                  _NumpadRow(
+                    keys: const ['1', '2', '3'],
+                    keyHeight: keyHeight,
+                    keyGap: keyGap,
+                    keyRadius: keyRadius,
+                    keyFontSize: keyFontSize,
+                    onKeyTap: _onKeyTap,
+                  ),
+                  const SizedBox(height: keyGap),
+                  _NumpadRow(
+                    keys: const ['4', '5', '6'],
+                    keyHeight: keyHeight,
+                    keyGap: keyGap,
+                    keyRadius: keyRadius,
+                    keyFontSize: keyFontSize,
+                    onKeyTap: _onKeyTap,
+                  ),
+                  const SizedBox(height: keyGap),
+                  _NumpadRow(
+                    keys: const ['7', '8', '9'],
+                    keyHeight: keyHeight,
+                    keyGap: keyGap,
+                    keyRadius: keyRadius,
+                    keyFontSize: keyFontSize,
+                    onKeyTap: _onKeyTap,
+                  ),
+                  const SizedBox(height: keyGap),
+                  _NumpadRow(
+                    keys: const ['.000', '0', 'back'],
+                    keyHeight: keyHeight,
+                    keyGap: keyGap,
+                    keyRadius: keyRadius,
+                    keyFontSize: keyFontSize,
+                    onKeyTap: _onKeyTap,
+                  ),
+                ],
+              ),
+            ),
+            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NumpadRow extends StatelessWidget {
+  final List<String> keys;
+  final double keyHeight;
+  final double keyGap;
+  final double keyRadius;
+  final double keyFontSize;
+  final ValueChanged<String> onKeyTap;
+
+  const _NumpadRow({
+    required this.keys,
+    required this.keyHeight,
+    required this.keyGap,
+    required this.keyRadius,
+    required this.keyFontSize,
+    required this.onKeyTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(keys.length, (index) {
+        final key = keys[index];
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(
+              right: index == keys.length - 1 ? 0 : keyGap,
+            ),
+            child: InkWell(
+              onTap: () => onKeyTap(key),
+              borderRadius: BorderRadius.circular(keyRadius),
+              child: Container(
+                height: keyHeight,
+                decoration: BoxDecoration(
+                  color: V2Colors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(keyRadius),
+                  border: Border.all(color: V2Colors.borderSubtle),
+                ),
+                alignment: Alignment.center,
+                child: key == 'back'
+                    ? const Icon(
+                        Icons.backspace_outlined,
+                        color: V2Colors.textPrimary,
+                        size: 20,
+                      )
+                    : Text(
+                        key,
+                        style: V2Typography.displayBalance(
+                          size: key == '.000' ? keyFontSize * 0.82 : keyFontSize,
+                        ).copyWith(fontWeight: FontWeight.w500),
+                      ),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}

@@ -7,6 +7,15 @@ class NativeBridge {
   static const MethodChannel _shopeeChannel =
       MethodChannel('com.hellorayy.jajan_tracker/shopee_watcher');
 
+  static Future<bool> openShopeePay() async {
+    try {
+      final res = await _shopeeChannel.invokeMethod<bool>('openShopeePay');
+      return res ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static final NativeBridge instance = NativeBridge._internal();
   factory NativeBridge() => instance;
   NativeBridge._internal();
