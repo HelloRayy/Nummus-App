@@ -349,7 +349,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
 
     final now = DateTime.now();
     final remainingDays = (8 - now.weekday).clamp(1, 7);
-    final dailyLimit = ((activeLimit / remainingDays) / 1000).round() * 1000;
+    final dailyLimit = ((activeLimit / remainingDays).floor() ~/ 500) * 500;
     final savings = (totalPool - activeLimit.round()).clamp(0, totalPool);
 
     return Padding(
