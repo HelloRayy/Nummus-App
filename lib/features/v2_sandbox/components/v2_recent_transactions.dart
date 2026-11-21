@@ -5,11 +5,13 @@ import '../../budget/models/expense_model.dart';
 class V2RecentTransactions extends StatelessWidget {
   final List<ExpenseModel> expenses;
   final String Function(int amount) formatRp;
+  final VoidCallback? onSeeAllTap;
 
   const V2RecentTransactions({
     super.key,
     required this.expenses,
     required this.formatRp,
+    this.onSeeAllTap,
   });
 
   @override
@@ -34,12 +36,19 @@ class V2RecentTransactions extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Recent transactions', style: V2Typography.cardTitle()),
-              const Text(
-                'See all',
-                style: TextStyle(
-                  color: V2Colors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
+              InkWell(
+                onTap: onSeeAllTap,
+                borderRadius: BorderRadius.circular(8),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Text(
+                    'See all',
+                    style: TextStyle(
+                      color: V2Colors.accentPrimary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
                 ),
               ),
             ],

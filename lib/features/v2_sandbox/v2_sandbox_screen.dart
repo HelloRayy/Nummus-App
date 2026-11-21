@@ -7,6 +7,7 @@ import 'components/v2_header_greeting.dart';
 import 'components/v2_recent_transactions.dart';
 import 'components/v2_spending_tracker_card.dart';
 import 'v2_add_budget_screen.dart';
+import 'v2_all_transactions_screen.dart';
 import 'v2_budget_planner_screen.dart';
 import 'v2_numpad_screen.dart';
 
@@ -98,6 +99,16 @@ class V2SandboxScreen extends StatelessWidget {
                       V2RecentTransactions(
                         expenses: repository.expenses,
                         formatRp: _formatRp,
+                        onSeeAllTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => V2AllTransactionsScreen(
+                                repository: repository,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
