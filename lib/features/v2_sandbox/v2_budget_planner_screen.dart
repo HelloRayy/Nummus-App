@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/v2_tokens.dart';
 import '../budget/repository/budget_repository.dart';
 import 'components/v2_spending_tracker_card.dart';
@@ -34,6 +36,55 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   String? _editingId;
   String _sortMode = 'oldest'; // 'oldest' | 'highest' | 'lowest'
   final TextEditingController _editController = TextEditingController();
+
+  static const String _draftKey = 'v2_planner_draft';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDraft();
+  }
+
+  Future<void> _loadDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_draftKey);
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final list = jsonDecode(raw) as List<dynamic>;
+      if (!mounted) return;
+      setState(() {
+        _items.clear();
+        for (final e in list) {
+          _items.add(
+            _PlanItem(
+              id: e['id'] as String,
+              title: e['title'] as String,
+              amount: e['amount'] as int,
+              isSelected: (e['isSelected'] as bool?) ?? false,
+            ),
+          );
+        }
+        _applySort();
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _saveDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = jsonEncode(
+      _items
+          .map(
+            (e) => {
+              'id': e.id,
+              'title': e.title,
+              'amount': e.amount,
+              'isSelected': e.isSelected,
+            },
+          )
+          .toList(),
+    );
+    await prefs.setString(_draftKey, encoded);
+  }
 
   @override
   void dispose() {
@@ -100,6 +151,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
       _applySort();
       _rawDigits = '';
     });
+    _saveDraft();
   }
 
   void _applySort() {
@@ -138,6 +190,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
       }
       _editingId = null;
     });
+    _saveDraft();
   }
 
   void _toggleSelect(int index) {
@@ -151,6 +204,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
         isSelected: !item.isSelected,
       );
     });
+    _saveDraft();
   }
 
   Future<void> _saveSelectedToExpenses() async {
@@ -167,6 +221,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
     setState(() {
       _items.removeWhere((e) => e.isSelected);
     });
+    _saveDraft();
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Saved ${selected.length} selected items to expenses'),
@@ -192,7 +247,14 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
 
     final selectedCount = _items.where((e) => e.isSelected).length;
 
-    return Scaffold(
+    return PopScope(
+      canPop: !_showNumpad,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _showNumpad) {
+          setState(() => _showNumpad = false);
+        }
+      },
+      child: Scaffold(
       backgroundColor: V2Colors.bgPrimary,
       body: SafeArea(
         child: Column(
@@ -447,6 +509,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                                       tooltip: 'Remove',
                                       onPressed: () {
                                         setState(() => _items.removeAt(index));
+                                        _saveDraft();
                                       },
                                       icon: const Icon(
                                         Icons.close_rounded,
@@ -615,6 +678,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 }
