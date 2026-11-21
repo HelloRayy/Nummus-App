@@ -51,6 +51,17 @@ class MainActivity : FlutterActivity() {
         // Shopee watcher channel
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SHOPEE_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
+                "openShopeePay" -> {
+                    val launchIntent = packageManager.getLaunchIntentForPackage("com.shopeepay.id")
+                        ?: packageManager.getLaunchIntentForPackage("com.shopee.id")
+                    if (launchIntent != null) {
+                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(launchIntent)
+                        result.success(true)
+                    } else {
+                        result.success(false)
+                    }
+                }
                 "checkOverlayPermission" -> {
                     val granted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                         Settings.canDrawOverlays(this)

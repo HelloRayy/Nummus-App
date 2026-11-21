@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../core/services/native_bridge.dart';
 import '../../core/theme/v2_tokens.dart';
 import '../budget/repository/budget_repository.dart';
 
@@ -136,12 +137,12 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                       ),
                     ),
                   ),
-                  InkWell(
-                    onTap: _rawDigits.isEmpty
-                        ? null
-                        : () async {
-                            final amount = int.tryParse(_rawDigits) ?? 0;
-                            if (amount <= 0) return;
+                  Row(
+                    children: [
+                      InkWell(
+                        onTap: () async {
+                          final amount = int.tryParse(_rawDigits) ?? 0;
+                          if (amount > 0) {
                             final catName = _selectedCategory == null
                                 ? null
                                 : _categories[_selectedCategory!].label;
@@ -150,34 +151,72 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                               categoryId: catName,
                               note: catName ?? 'Expense',
                             );
-                            if (!context.mounted) return;
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Saved ${catName ?? 'Expense'}: Rp $formatted',
-                                ),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 10,
-                      ),
-                      child: Text(
-                        'Save',
-                        style: TextStyle(
-                          color: _rawDigits.isEmpty
-                              ? V2Colors.textMuted
-                              : V2Colors.accentPrimary,
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                          }
+                          await NativeBridge.openShopeePay();
+                          if (!context.mounted) return;
+                          Navigator.pop(context);
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 10,
+                          ),
+                          child: Text(
+                            'SPay',
+                            style: TextStyle(
+                              color: V2Colors.semanticWarning,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
+                      const SizedBox(width: 4),
+                      InkWell(
+                        onTap: _rawDigits.isEmpty
+                            ? null
+                            : () async {
+                                final amount = int.tryParse(_rawDigits) ?? 0;
+                                if (amount <= 0) return;
+                                final catName = _selectedCategory == null
+                                    ? null
+                                    : _categories[_selectedCategory!].label;
+                                await widget.repository.addExpense(
+                                  amount,
+                                  categoryId: catName,
+                                  note: catName ?? 'Expense',
+                                );
+                                if (!context.mounted) return;
+                                Navigator.pop(context);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      'Saved ${catName ?? 'Expense'}: Rp $formatted',
+                                    ),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 10,
+                          ),
+                          child: Text(
+                            'Save',
+                            style: TextStyle(
+                              color: _rawDigits.isEmpty
+                                  ? V2Colors.textMuted
+                                  : V2Colors.accentPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
