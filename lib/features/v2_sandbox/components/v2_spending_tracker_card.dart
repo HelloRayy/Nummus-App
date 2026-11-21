@@ -132,7 +132,11 @@ class V2SpendingTrackerCard extends StatelessWidget {
                         child: Text(
                           availableText,
                           style: V2Typography.displayBalance(size: amountSize)
-                              .copyWith(color: V2Colors.semanticPositive),
+                              .copyWith(
+                            color: availableText.startsWith('-')
+                                ? V2Colors.semanticDanger
+                                : V2Colors.semanticPositive,
+                          ),
                         ),
                       ),
                     ],

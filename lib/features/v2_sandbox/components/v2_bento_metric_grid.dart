@@ -41,7 +41,7 @@ class V2BentoMetricGrid extends StatelessWidget {
                 child: _BentoCard(
                   title: 'Last purchase',
                   value: lastPurchaseText,
-                  valueColor: V2Colors.semanticWarning,
+                  valueColor: V2Colors.semanticDanger,
                   subLabel: lastPurchaseCategory,
                 ),
               ),
@@ -62,7 +62,9 @@ class V2BentoMetricGrid extends StatelessWidget {
                 child: _BentoCard(
                   title: 'Day budget',
                   value: dayBudgetText,
-                  valueColor: V2Colors.accentPrimary,
+                  valueColor: dayBudgetText.startsWith('-')
+                      ? V2Colors.semanticDanger
+                      : V2Colors.accentPrimary,
                 ),
               ),
             ],
