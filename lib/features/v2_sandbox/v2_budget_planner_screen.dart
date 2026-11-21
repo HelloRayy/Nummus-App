@@ -34,6 +34,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   String _rawDigits = '';
   bool _showNumpad = true;
   String? _editingId;
+  String? _editingAmountId;
   String _sortMode = 'oldest'; // 'oldest' | 'highest' | 'lowest'
   final TextEditingController _editController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
@@ -137,24 +138,49 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
     return '${isNeg ? '-' : ''}Rp ${_formatDigits(amount.abs().toString())}';
   }
 
+  void _startAmountEdit(int index) {
+    HapticFeedback.mediumImpact();
+    final item = _items[index];
+    setState(() {
+      _editingId = null;
+      _editingAmountId = item.id;
+      _rawDigits = item.amount.toString();
+      _showNumpad = true;
+    });
+  }
+
   void _addItem() {
     final amount = int.tryParse(_rawDigits) ?? 0;
     if (amount <= 0) return;
 
     HapticFeedback.mediumImpact();
     setState(() {
-      _items.add(
-        _PlanItem(
-          id: DateTime.now().microsecondsSinceEpoch.toString(),
-          title: 'Plan #${_items.length + 1}',
-          amount: amount,
-        ),
-      );
+      if (_editingAmountId != null) {
+        final idx = _items.indexWhere((e) => e.id == _editingAmountId);
+        if (idx != -1) {
+          final old = _items[idx];
+          _items[idx] = _PlanItem(
+            id: old.id,
+            title: old.title,
+            amount: amount,
+            isSelected: old.isSelected,
+          );
+        }
+        _editingAmountId = null;
+      } else {
+        _items.add(
+          _PlanItem(
+            id: DateTime.now().microsecondsSinceEpoch.toString(),
+            title: 'Plan #${_items.length + 1}',
+            amount: amount,
+          ),
+        );
+      }
       _applySort();
       _rawDigits = '';
     });
     _saveDraft();
-    if (_sortMode == 'oldest') {
+    if (_sortMode == 'oldest' && _editingAmountId == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_scrollController.hasClients) {
           _scrollController.animateTo(
@@ -421,12 +447,20 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                           const SizedBox(height: 8),
                           ...List.generate(_items.length, (index) {
                           final item = _items[index];
+                          final isEditingAmount = _editingAmountId == item.id;
                           return Column(
                             children: [
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 10),
-                                child: Row(
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onLongPress: () => _startAmountEdit(index),
+                                child: Container(
+                                  color: isEditingAmount
+                                      ? V2Colors.accentPrimary
+                                          .withValues(alpha: 0.08)
+                                      : Colors.transparent,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
+                                  child: Row(
                                   children: [
                                     InkWell(
                                       onTap: () => _toggleSelect(index),
@@ -538,6 +572,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                                     ),
                                   ],
                                 ),
+                              ),
                               ),
                               if (index < _items.length - 1)
                                 const Divider(
