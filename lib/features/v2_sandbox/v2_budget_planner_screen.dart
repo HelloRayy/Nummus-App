@@ -30,6 +30,7 @@ class V2BudgetPlannerScreen extends StatefulWidget {
 class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   final List<_PlanItem> _items = [];
   String _rawDigits = '';
+  bool _showNumpad = true;
 
   void _onKeyTap(String key) {
     HapticFeedback.lightImpact();
@@ -196,9 +197,9 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
     const double listItemRadius = 8.2;
     const double sheetRadius = 32.0;
     const double displayAmountSize = 23.9;
-    const double keyHeight = 48.0;
-    const double keyGap = 8.1;
-    const double keyRadius = 24.0;
+    const double keyHeight = 60.5;
+    const double keyGap = 6.0;
+    const double keyRadius = 28.0;
 
     final selectedCount = _items.where((e) => e.isSelected).length;
 
@@ -387,99 +388,146 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
               ),
             ),
 
-            // Custom Numpad Sheet (no system keyboard)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(
-                horizontalPadding,
-                14,
-                horizontalPadding,
-                12,
-              ),
-              decoration: const BoxDecoration(
-                color: V2Colors.surfaceCard,
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(sheetRadius),
+            // Collapsible Custom Numpad Sheet
+            if (!_showNumpad)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  8,
+                  horizontalPadding,
+                  12,
                 ),
-                border: Border(
-                  top: BorderSide(color: V2Colors.borderSubtle),
-                ),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Rp ${_formatDigits(_rawDigits)}',
-                          style: V2Typography.displayBalance(
-                            size: displayAmountSize,
-                          ).copyWith(
-                            color: _rawDigits.isEmpty
-                                ? V2Colors.textMuted
-                                : V2Colors.textPrimary,
+                child: InkWell(
+                  onTap: () => setState(() => _showNumpad = true),
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    height: 52,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: V2Colors.accentPrimary,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.add_rounded, color: V2Colors.bgPrimary),
+                        SizedBox(width: 6),
+                        Text(
+                          'Add Plan',
+                          style: TextStyle(
+                            color: V2Colors.bgPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ),
-                      InkWell(
-                        onTap: _rawDigits.isEmpty ? null : _addItem,
-                        borderRadius: BorderRadius.circular(14),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 160),
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: _rawDigits.isEmpty
-                                ? V2Colors.surfaceElevated
-                                : V2Colors.accentPrimary,
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Icon(
-                            Icons.add_rounded,
-                            color: _rawDigits.isEmpty
-                                ? V2Colors.textMuted
-                                : V2Colors.bgPrimary,
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            else
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  14,
+                  horizontalPadding,
+                  12,
+                ),
+                decoration: const BoxDecoration(
+                  color: V2Colors.surfaceCard,
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(sheetRadius),
+                  ),
+                  border: Border(
+                    top: BorderSide(color: V2Colors.borderSubtle),
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        IconButton(
+                          visualDensity: VisualDensity.compact,
+                          tooltip: 'Hide Numpad',
+                          onPressed: () => setState(() => _showNumpad = false),
+                          icon: const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: V2Colors.textSecondary,
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  _NumpadRow(
-                    keys: const ['1', '2', '3'],
-                    keyHeight: keyHeight,
-                    keyGap: keyGap,
-                    keyRadius: keyRadius,
-                    onKeyTap: _onKeyTap,
-                  ),
-                  const SizedBox(height: keyGap),
-                  _NumpadRow(
-                    keys: const ['4', '5', '6'],
-                    keyHeight: keyHeight,
-                    keyGap: keyGap,
-                    keyRadius: keyRadius,
-                    onKeyTap: _onKeyTap,
-                  ),
-                  const SizedBox(height: keyGap),
-                  _NumpadRow(
-                    keys: const ['7', '8', '9'],
-                    keyHeight: keyHeight,
-                    keyGap: keyGap,
-                    keyRadius: keyRadius,
-                    onKeyTap: _onKeyTap,
-                  ),
-                  const SizedBox(height: keyGap),
-                  _NumpadRow(
-                    keys: const ['.000', '0', 'back'],
-                    keyHeight: keyHeight,
-                    keyGap: keyGap,
-                    keyRadius: keyRadius,
-                    onKeyTap: _onKeyTap,
-                  ),
-                ],
+                        Expanded(
+                          child: Text(
+                            'Rp ${_formatDigits(_rawDigits)}',
+                            style: V2Typography.displayBalance(
+                              size: displayAmountSize,
+                            ).copyWith(
+                              color: _rawDigits.isEmpty
+                                  ? V2Colors.textMuted
+                                  : V2Colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: _rawDigits.isEmpty ? null : _addItem,
+                          borderRadius: BorderRadius.circular(14),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: _rawDigits.isEmpty
+                                  ? V2Colors.surfaceElevated
+                                  : V2Colors.accentPrimary,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Icon(
+                              Icons.add_rounded,
+                              color: _rawDigits.isEmpty
+                                  ? V2Colors.textMuted
+                                  : V2Colors.bgPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    _NumpadRow(
+                      keys: const ['1', '2', '3'],
+                      keyHeight: keyHeight,
+                      keyGap: keyGap,
+                      keyRadius: keyRadius,
+                      onKeyTap: _onKeyTap,
+                    ),
+                    const SizedBox(height: keyGap),
+                    _NumpadRow(
+                      keys: const ['4', '5', '6'],
+                      keyHeight: keyHeight,
+                      keyGap: keyGap,
+                      keyRadius: keyRadius,
+                      onKeyTap: _onKeyTap,
+                    ),
+                    const SizedBox(height: keyGap),
+                    _NumpadRow(
+                      keys: const ['7', '8', '9'],
+                      keyHeight: keyHeight,
+                      keyGap: keyGap,
+                      keyRadius: keyRadius,
+                      onKeyTap: _onKeyTap,
+                    ),
+                    const SizedBox(height: keyGap),
+                    _NumpadRow(
+                      keys: const ['.000', '0', 'back'],
+                      keyHeight: keyHeight,
+                      keyGap: keyGap,
+                      keyRadius: keyRadius,
+                      onKeyTap: _onKeyTap,
+                    ),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -532,7 +580,7 @@ class _NumpadRow extends StatelessWidget {
                     : Text(
                         key,
                         style: V2Typography.displayBalance(
-                          size: key == '.000' ? 15 : 18,
+                          size: key == '.000' ? 19.7 * 0.82 : 19.7,
                         ).copyWith(fontWeight: FontWeight.w500),
                       ),
               ),
