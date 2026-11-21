@@ -180,6 +180,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   void _startInlineEdit(int index) {
     final current = _items[index];
     setState(() {
+      _showNumpad = false;
       _editingId = current.id;
       _editController.text = current.title;
       _editController.selection = TextSelection(
@@ -340,6 +341,9 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
             Expanded(
               child: ListView(
                 controller: _scrollController,
+                padding: EdgeInsets.only(
+                  bottom: _editingId != null ? 280 : 16,
+                ),
                 children: [
                   V2SpendingTrackerCard(
                     availableText: _formatRp(finalRemaining),
