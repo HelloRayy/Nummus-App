@@ -269,6 +269,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
       },
       child: Scaffold(
       backgroundColor: V2Colors.bgPrimary,
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         child: Column(
           children: [
@@ -550,40 +551,49 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
             ),
 
             // Collapsible Custom Numpad Sheet
-            if (!_showNumpad)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  horizontalPadding,
-                  8,
-                  horizontalPadding,
-                  12,
-                ),
-                child: InkWell(
-                  onTap: () => setState(() => _showNumpad = true),
-                  borderRadius: BorderRadius.circular(999),
-                  child: Container(
-                    height: 52,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: V2Colors.accentPrimary,
-                      borderRadius: BorderRadius.circular(999),
+            if (_editingId != null)
+              const SizedBox.shrink()
+            else if (!_showNumpad)
+              GestureDetector(
+                onTap: () => setState(() => _showNumpad = true),
+                onVerticalDragEnd: (details) {
+                  if ((details.primaryVelocity ?? 0) < -150) {
+                    setState(() => _showNumpad = true);
+                  }
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+                  decoration: const BoxDecoration(
+                    color: V2Colors.surfaceCard,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(sheetRadius),
                     ),
-                    alignment: Alignment.center,
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.add_rounded, color: V2Colors.bgPrimary),
-                        SizedBox(width: 6),
-                        Text(
-                          'Add Plan',
-                          style: TextStyle(
-                            color: V2Colors.bgPrimary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
+                    border: Border(
+                      top: BorderSide(color: V2Colors.borderSubtle),
+                    ),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: V2Colors.textMuted.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(999),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        '+ Add Plan',
+                        style: TextStyle(
+                          color: V2Colors.textSecondary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               )
