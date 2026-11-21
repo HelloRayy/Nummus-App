@@ -385,45 +385,6 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                 keyFontSize: keyFontSize,
                 onKeyTap: _onKeyTap,
               ),
-              const SizedBox(height: 16),
-              InkWell(
-                onTap: addedAmount == 0
-                    ? null
-                    : () async {
-                        await widget.repository.addTopUp(addedAmount);
-                        if (!mounted) return;
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Added budget: +Rp $formatted'),
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                borderRadius: BorderRadius.circular(999),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  height: ctaHeight,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: addedAmount == 0
-                        ? V2Colors.surfaceElevated
-                        : V2Colors.semanticPositive,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Add Budget',
-                    style: TextStyle(
-                      color: addedAmount == 0
-                          ? V2Colors.textMuted
-                          : V2Colors.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -536,42 +497,6 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
             ),
           ),
           const Spacer(),
-          InkWell(
-            onTap: () async {
-              await widget.repository.updateBudget(
-                weeklyIncome: totalPool,
-                weeklySavingsTarget: savings,
-              );
-              if (!mounted) return;
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Limit updated: Rp ${_formatRupiah(activeLimit.round())} (Rp ${_formatRupiah(dailyLimit)}/hari)',
-                  ),
-                  duration: const Duration(seconds: 2),
-                ),
-              );
-            },
-            borderRadius: BorderRadius.circular(999),
-            child: Container(
-              height: 58.4,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: V2Colors.accentPrimary,
-                borderRadius: BorderRadius.circular(999),
-              ),
-              alignment: Alignment.center,
-              child: const Text(
-                'Update Limit',
-                style: TextStyle(
-                  color: V2Colors.bgPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
