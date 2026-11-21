@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import '../../core/theme/v2_tokens.dart';
 import '../budget/repository/budget_repository.dart';
 import 'components/v2_spending_tracker_card.dart';
-import 'planner_tuner_hud.dart';
 
 class _PlanItem {
   final String id;
@@ -29,13 +28,11 @@ class V2BudgetPlannerScreen extends StatefulWidget {
 class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   final List<_PlanItem> _items = [];
   final TextEditingController _titleController = TextEditingController();
-  final PlannerTunerConfig _config = PlannerTunerConfig();
   String _rawDigits = '';
 
   @override
   void dispose() {
     _titleController.dispose();
-    _config.dispose();
     super.dispose();
   }
 
@@ -150,17 +147,19 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
     final finalRemaining = budgetCurrent - totalPlanned;
     final isOver = finalRemaining < 0;
 
+    const double horizontalPadding = 24.1;
+    const double listItemRadius = 8.2;
+    const double sheetRadius = 32.0;
+    const double displayAmountSize = 23.9;
+    const double keyHeight = 48.0;
+    const double keyGap = 8.1;
+    const double keyRadius = 24.0;
+
     return Scaffold(
       backgroundColor: V2Colors.bgPrimary,
       body: SafeArea(
-        child: ListenableBuilder(
-          listenable: _config,
-          builder: (_, _) {
-            final c = _config;
-            return Stack(
-              children: [
-                Column(
-                  children: [
+        child: Column(
+          children: [
             // Top Bar with Save All on top-right
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -245,7 +244,9 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                       ),
                     )
                   : ListView.separated(
-                      padding: EdgeInsets.symmetric(horizontal: c.horizontalPadding),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                      ),
                       itemCount: _items.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
@@ -257,7 +258,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: V2Colors.surfaceCard,
-                            borderRadius: BorderRadius.circular(c.listItemRadius),
+                            borderRadius: BorderRadius.circular(listItemRadius),
                             border: Border.all(color: V2Colors.borderSubtle),
                           ),
                           child: Row(
@@ -313,18 +314,18 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
             // Custom Numpad Sheet
             Container(
               width: double.infinity,
-              padding: EdgeInsets.fromLTRB(
-                c.horizontalPadding,
+              padding: const EdgeInsets.fromLTRB(
+                horizontalPadding,
                 14,
-                c.horizontalPadding,
+                horizontalPadding,
                 12,
               ),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: V2Colors.surfaceCard,
                 borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(c.sheetRadius),
+                  top: Radius.circular(sheetRadius),
                 ),
-                border: const Border(
+                border: Border(
                   top: BorderSide(color: V2Colors.borderSubtle),
                 ),
               ),
@@ -337,7 +338,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                         child: Text(
                           'Rp ${_formatDigits(_rawDigits)}',
                           style: V2Typography.displayBalance(
-                            size: c.displayAmountSize,
+                            size: displayAmountSize,
                           ).copyWith(
                             color: _rawDigits.isEmpty
                                 ? V2Colors.textMuted
@@ -400,44 +401,39 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                   const SizedBox(height: 12),
                   _NumpadRow(
                     keys: const ['1', '2', '3'],
-                    keyHeight: c.keyHeight,
-                    keyGap: c.keyGap,
-                    keyRadius: c.keyRadius,
+                    keyHeight: keyHeight,
+                    keyGap: keyGap,
+                    keyRadius: keyRadius,
                     onKeyTap: _onKeyTap,
                   ),
-                  SizedBox(height: c.keyGap),
+                  const SizedBox(height: keyGap),
                   _NumpadRow(
                     keys: const ['4', '5', '6'],
-                    keyHeight: c.keyHeight,
-                    keyGap: c.keyGap,
-                    keyRadius: c.keyRadius,
+                    keyHeight: keyHeight,
+                    keyGap: keyGap,
+                    keyRadius: keyRadius,
                     onKeyTap: _onKeyTap,
                   ),
-                  SizedBox(height: c.keyGap),
+                  const SizedBox(height: keyGap),
                   _NumpadRow(
                     keys: const ['7', '8', '9'],
-                    keyHeight: c.keyHeight,
-                    keyGap: c.keyGap,
-                    keyRadius: c.keyRadius,
+                    keyHeight: keyHeight,
+                    keyGap: keyGap,
+                    keyRadius: keyRadius,
                     onKeyTap: _onKeyTap,
                   ),
-                  SizedBox(height: c.keyGap),
+                  const SizedBox(height: keyGap),
                   _NumpadRow(
                     keys: const ['.000', '0', 'back'],
-                    keyHeight: c.keyHeight,
-                    keyGap: c.keyGap,
-                    keyRadius: c.keyRadius,
+                    keyHeight: keyHeight,
+                    keyGap: keyGap,
+                    keyRadius: keyRadius,
                     onKeyTap: _onKeyTap,
                   ),
                 ],
               ),
             ),
           ],
-                ),
-                PlannerTunerHud(config: _config),
-              ],
-            );
-          },
         ),
       ),
     );
