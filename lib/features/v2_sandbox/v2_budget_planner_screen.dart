@@ -273,7 +273,9 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   @override
   Widget build(BuildContext context) {
     final budgetCurrent = widget.repository.remainingWeeklySpendable;
-    final totalPlanned = _items.fold<int>(0, (sum, e) => sum + e.amount);
+    final totalPlanned = _items
+        .where((e) => e.isSelected)
+        .fold<int>(0, (sum, e) => sum + e.amount);
     final finalRemaining = budgetCurrent - totalPlanned;
     final isOver = finalRemaining < 0;
 
