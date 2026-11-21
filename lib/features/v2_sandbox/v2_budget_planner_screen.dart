@@ -31,6 +31,14 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   final List<_PlanItem> _items = [];
   String _rawDigits = '';
   bool _showNumpad = true;
+  String? _editingId;
+  final TextEditingController _editController = TextEditingController();
+
+  @override
+  void dispose() {
+    _editController.dispose();
+    super.dispose();
+  }
 
   void _onKeyTap(String key) {
     HapticFeedback.lightImpact();
@@ -93,62 +101,32 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
     });
   }
 
-  Future<void> _renameItem(int index) async {
+  void _startInlineEdit(int index) {
     final current = _items[index];
-    final controller = TextEditingController(text: current.title);
-    final newTitle = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: V2Colors.surfaceCard,
-        title: const Text(
-          'Rename Plan',
-          style: TextStyle(color: V2Colors.textPrimary, fontSize: 16),
-        ),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          style: const TextStyle(color: V2Colors.textPrimary),
-          decoration: InputDecoration(
-            hintText: 'e.g. Makan, Nonton',
-            hintStyle: const TextStyle(color: V2Colors.textMuted),
-            filled: true,
-            fillColor: V2Colors.surfaceElevated,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-          ),
-          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: V2Colors.textSecondary),
-            ),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: V2Colors.accentPrimary,
-              foregroundColor: V2Colors.bgPrimary,
-            ),
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (newTitle != null && newTitle.isNotEmpty) {
-      setState(() {
+    setState(() {
+      _editingId = current.id;
+      _editController.text = current.title;
+      _editController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: current.title.length,
+      );
+    });
+  }
+
+  void _commitInlineEdit(int index) {
+    final current = _items[index];
+    final newTitle = _editController.text.trim();
+    setState(() {
+      if (newTitle.isNotEmpty) {
         _items[index] = _PlanItem(
           id: current.id,
           title: newTitle,
           amount: current.amount,
+          isSelected: current.isSelected,
         );
-      });
-    }
+      }
+      _editingId = null;
+    });
   }
 
   void _toggleSelect(int index) {
@@ -311,43 +289,87 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                                     InkWell(
                                       onTap: () => _toggleSelect(index),
                                       borderRadius: BorderRadius.circular(999),
-                                      child: Icon(
-                                        item.isSelected
-                                            ? Icons.check_circle_rounded
-                                            : Icons
-                                                .radio_button_unchecked_rounded,
-                                        color: item.isSelected
-                                            ? V2Colors.semanticPositive
-                                            : V2Colors.textMuted,
-                                        size: 22,
+                                      child: AnimatedContainer(
+                                        duration:
+                                            const Duration(milliseconds: 160),
+                                        width: 22,
+                                        height: 22,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: item.isSelected
+                                              ? V2Colors.semanticPositive
+                                              : Colors.transparent,
+                                          border: Border.all(
+                                            color: item.isSelected
+                                                ? V2Colors.semanticPositive
+                                                : V2Colors.textMuted,
+                                            width: 1.8,
+                                          ),
+                                        ),
+                                        child: item.isSelected
+                                            ? const Icon(
+                                                Icons.check_rounded,
+                                                color: V2Colors.bgPrimary,
+                                                size: 14,
+                                              )
+                                            : null,
                                       ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
-                                      child: InkWell(
-                                        onTap: () => _renameItem(index),
-                                        borderRadius: BorderRadius.circular(6),
-                                        child: Row(
-                                          children: [
-                                            Flexible(
-                                              child: Text(
-                                                item.title,
-                                                style: V2Typography.cardTitle(
-                                                  size: 14,
+                                      child: _editingId == item.id
+                                          ? TextField(
+                                              controller: _editController,
+                                              autofocus: true,
+                                              style: V2Typography.cardTitle(
+                                                size: 14,
+                                              ),
+                                              decoration: const InputDecoration(
+                                                isDense: true,
+                                                contentPadding:
+                                                    EdgeInsets.symmetric(
+                                                  vertical: 4,
                                                 ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
+                                                border: UnderlineInputBorder(
+                                                  borderSide: BorderSide(
+                                                    color:
+                                                        V2Colors.accentPrimary,
+                                                  ),
+                                                ),
+                                              ),
+                                              onSubmitted: (_) =>
+                                                  _commitInlineEdit(index),
+                                              onTapOutside: (_) =>
+                                                  _commitInlineEdit(index),
+                                            )
+                                          : InkWell(
+                                              onTap: () =>
+                                                  _startInlineEdit(index),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                              child: Row(
+                                                children: [
+                                                  Flexible(
+                                                    child: Text(
+                                                      item.title,
+                                                      style:
+                                                          V2Typography.cardTitle(
+                                                        size: 14,
+                                                      ),
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                  const Icon(
+                                                    Icons.edit_outlined,
+                                                    size: 14,
+                                                    color: V2Colors.textMuted,
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                            const SizedBox(width: 6),
-                                            const Icon(
-                                              Icons.edit_outlined,
-                                              size: 14,
-                                              color: V2Colors.textMuted,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
