@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/v2_tokens.dart';
@@ -17,6 +18,8 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
   int _activeTab = 0; // 0 = Top-up, 1 = Set Limit
 
   String _addBudgetDigits = '';
+  int _debouncedAdded = 0;
+  Timer? _debounceTimer;
   late double _weeklyLimit;
 
   @override
@@ -28,8 +31,19 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _scheduleBalanceUpdate() {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+      if (!mounted) return;
+      setState(() {
+        _debouncedAdded = int.tryParse(_addBudgetDigits) ?? 0;
+      });
+    });
   }
 
   void _switchTab(int tab) {
@@ -65,6 +79,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
         _addBudgetDigits += key;
       }
     });
+    _scheduleBalanceUpdate();
   }
 
   String _formatRupiah(int amount) {
@@ -321,11 +336,17 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                 ],
               ),
               const SizedBox(height: 6),
-              Builder(
-                builder: (_) {
-                  final base = widget.repository.remainingWeeklySpendable;
-                  final live = base + addedAmount;
-                  final isAdding = addedAmount > 0;
+              TweenAnimationBuilder<int>(
+                tween: IntTween(
+                  begin: widget.repository.remainingWeeklySpendable +
+                      _debouncedAdded,
+                  end: widget.repository.remainingWeeklySpendable +
+                      _debouncedAdded,
+                ),
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOutQuart,
+                builder: (_, animatedVal, _) {
+                  final isAdding = _debouncedAdded > 0;
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -338,7 +359,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                         const SizedBox(width: 4),
                       ],
                       Text(
-                        'Current balance: Rp ${_formatRupiah(live)}',
+                        'Current balance: Rp ${_formatRupiah(animatedVal)}',
                         style: V2Typography.labelMuted(size: 12).copyWith(
                           color: isAdding
                               ? V2Colors.semanticPositive

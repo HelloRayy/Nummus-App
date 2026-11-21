@@ -60,58 +60,69 @@ class V2SpendingTrackerCard extends StatelessWidget {
                 ],
               ),
             const SizedBox(height: 16),
-            ShaderMask(
-              blendMode: BlendMode.dstIn,
-              shaderCallback: (bounds) => const LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: [
-                  Colors.transparent,
-                  Colors.white,
-                  Colors.white,
-                  Colors.transparent,
-                ],
-                stops: [0.0, 0.07, 0.88, 1.0],
-              ).createShader(bounds),
-              child: SizedBox(
-                height: barHeight + thumbExtraHeight,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: List.generate(totalBars, (index) {
-                    final isThumb = index == thumbIndex;
-                    final t = index / (totalBars - 1);
-                    final barColor =
-                        _segmentColor(t, isAfterThumb: index > thumbIndex);
+            TweenAnimationBuilder<double>(
+              tween: Tween<double>(begin: progress, end: progress),
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutQuart,
+              builder: (_, animatedProgress, _) {
+                final thumbIndex = (totalBars * animatedProgress)
+                    .round()
+                    .clamp(0, totalBars - 1);
+                return ShaderMask(
+                  blendMode: BlendMode.dstIn,
+                  shaderCallback: (bounds) => const LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Colors.transparent,
+                      Colors.white,
+                      Colors.white,
+                      Colors.transparent,
+                    ],
+                    stops: [0.0, 0.07, 0.88, 1.0],
+                  ).createShader(bounds),
+                  child: SizedBox(
+                    height: barHeight + thumbExtraHeight,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: List.generate(totalBars, (index) {
+                        final isThumb = index == thumbIndex;
+                        final t = index / (totalBars - 1);
+                        final barColor =
+                            _segmentColor(t, isAfterThumb: index > thumbIndex);
 
-                    if (isThumb) {
-                      return Container(
-                        width: thumbWidth,
-                        height: barHeight + thumbExtraHeight,
-                        margin: EdgeInsets.only(
-                          right: index == totalBars - 1 ? 0 : barGap,
-                        ),
-                        decoration: BoxDecoration(
-                          color: V2Colors.textPrimary,
-                          borderRadius: BorderRadius.circular(barRadius + 1),
-                        ),
-                      );
-                    }
+                        if (isThumb) {
+                          return Container(
+                            width: thumbWidth,
+                            height: barHeight + thumbExtraHeight,
+                            margin: EdgeInsets.only(
+                              right: index == totalBars - 1 ? 0 : barGap,
+                            ),
+                            decoration: BoxDecoration(
+                              color: V2Colors.textPrimary,
+                              borderRadius:
+                                  BorderRadius.circular(barRadius + 1),
+                            ),
+                          );
+                        }
 
-                    return Expanded(
-                      child: Container(
-                        height: barHeight,
-                        margin: EdgeInsets.only(
-                          right: index == totalBars - 1 ? 0 : barGap,
-                        ),
-                        decoration: BoxDecoration(
-                          color: barColor,
-                          borderRadius: BorderRadius.circular(barRadius),
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ),
+                        return Expanded(
+                          child: Container(
+                            height: barHeight,
+                            margin: EdgeInsets.only(
+                              right: index == totalBars - 1 ? 0 : barGap,
+                            ),
+                            decoration: BoxDecoration(
+                              color: barColor,
+                              borderRadius: BorderRadius.circular(barRadius),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
+                );
+              },
             ),
             const SizedBox(height: 18),
             Row(
