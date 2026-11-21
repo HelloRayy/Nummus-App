@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/v2_tokens.dart';
 import '../budget/repository/budget_repository.dart';
+import 'components/v2_spending_tracker_card.dart';
 import 'planner_tuner_hud.dart';
 
 class _PlanItem {
@@ -223,56 +224,13 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
 
             const SizedBox(height: 12),
 
-            // Summary Card
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: V2Colors.surfaceCard,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: V2Colors.borderSubtle),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Remaining after plan',
-                          style: V2Typography.labelMuted(size: 11),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _formatRp(finalRemaining),
-                          style: V2Typography.displayBalance(size: 22).copyWith(
-                            color: isOver
-                                ? V2Colors.semanticDanger
-                                : V2Colors.semanticPositive,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          'Planned: -${_formatRp(totalPlanned)}',
-                          style: V2Typography.labelMuted(size: 11)
-                              .copyWith(color: V2Colors.semanticWarning),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Current: ${_formatRp(budgetCurrent)}',
-                          style: V2Typography.labelMuted(size: 11),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+            // Summary Card (Weekly Spending Tracker)
+            V2SpendingTrackerCard(
+              availableText: _formatRp(finalRemaining),
+              limitText: _formatRp(totalPlanned),
+              progress: budgetCurrent > 0
+                  ? (totalPlanned / budgetCurrent).clamp(0.0, 1.0)
+                  : 0.0,
             ),
 
             const SizedBox(height: 10),
