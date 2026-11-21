@@ -19,6 +19,8 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
 
   String _addBudgetDigits = '';
   int _debouncedAdded = 0;
+  String _adjustDigits = '';
+  int _debouncedAdjust = 0;
   Timer? _debounceTimer;
   late double _weeklyLimit;
 
@@ -42,6 +44,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
       if (!mounted) return;
       setState(() {
         _debouncedAdded = int.tryParse(_addBudgetDigits) ?? 0;
+        _debouncedAdjust = int.tryParse(_adjustDigits) ?? 0;
       });
     });
   }
@@ -58,25 +61,26 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
   void _onKeyTap(String key) {
     HapticFeedback.lightImpact();
     setState(() {
+      var digits = _activeTab == 2 ? _adjustDigits : _addBudgetDigits;
       if (key == 'back') {
-        if (_addBudgetDigits.isNotEmpty) {
-          _addBudgetDigits =
-              _addBudgetDigits.substring(0, _addBudgetDigits.length - 1);
+        if (digits.isNotEmpty) {
+          digits = digits.substring(0, digits.length - 1);
         }
-        return;
-      }
-      if (key == '.000') {
-        if (_addBudgetDigits.isEmpty || _addBudgetDigits == '0') return;
-        if (_addBudgetDigits.length + 3 <= 12) {
-          _addBudgetDigits += '000';
+      } else if (key == '.000') {
+        if (digits.isNotEmpty && digits != '0' && digits.length + 3 <= 12) {
+          digits += '000';
         }
-        return;
+      } else if (digits.length < 12) {
+        if (digits == '0') {
+          digits = key;
+        } else {
+          digits += key;
+        }
       }
-      if (_addBudgetDigits.length >= 12) return;
-      if (_addBudgetDigits == '0') {
-        _addBudgetDigits = key;
+      if (_activeTab == 2) {
+        _adjustDigits = digits;
       } else {
-        _addBudgetDigits += key;
+        _addBudgetDigits = digits;
       }
     });
     _scheduleBalanceUpdate();
@@ -98,8 +102,10 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
   @override
   Widget build(BuildContext context) {
     final addedAmount = int.tryParse(_addBudgetDigits) ?? 0;
+    final adjustAmount = int.tryParse(_adjustDigits);
     final canSaveTopUp = _activeTab == 0 && addedAmount > 0;
-    final canSave = _activeTab == 1 || canSaveTopUp;
+    final canSaveAdjust = _activeTab == 2 && adjustAmount != null;
+    final canSave = _activeTab == 1 || canSaveTopUp || canSaveAdjust;
 
     return Scaffold(
       backgroundColor: V2Colors.bgPrimary,
@@ -154,6 +160,21 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                                       SnackBar(
                                         content: Text(
                                           'Added budget: +Rp ${_formatRupiah(addedAmount)}',
+                                        ),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  } else if (_activeTab == 2 &&
+                                      adjustAmount != null) {
+                                    await widget.repository.adjustRealBalance(
+                                      actualBalance: adjustAmount,
+                                    );
+                                    if (!context.mounted) return;
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Adjusted budget to Rp ${_formatRupiah(adjustAmount)}',
                                         ),
                                         duration: const Duration(seconds: 2),
                                       ),
@@ -240,6 +261,14 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                       onTap: () => _switchTab(1),
                     ),
                   ),
+                  Expanded(
+                    child: _UnderlineTab(
+                      label: 'Adjust',
+                      active: _activeTab == 2,
+                      activeColor: V2Colors.accentPrimary,
+                      onTap: () => _switchTab(2),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -251,6 +280,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                 children: [
                   _buildTopUpTab(),
                   _buildSetLimitTab(),
+                  _buildAdjustTab(),
                 ],
               ),
             ),
@@ -520,6 +550,137 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
           const Spacer(),
         ],
       ),
+    );
+  }
+  Widget _buildAdjustTab() {
+    const double horizontalPadding = 12.2;
+    const double sheetRadius = 40.0;
+    const double amountSize = 58.0;
+    const double keyHeight = 60.5;
+    const double keyGap = 6.0;
+    const double keyRadius = 28.0;
+    const double keyFontSize = 19.7;
+
+    final adjustAmount = int.tryParse(_adjustDigits) ?? 0;
+    final formatted = _formatRupiah(adjustAmount);
+    final currentBalance = widget.repository.remainingWeeklySpendable;
+    final diff = _debouncedAdjust - currentBalance;
+
+    return Column(
+      children: [
+        const Spacer(),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: horizontalPadding),
+          child: Column(
+            children: [
+              Text(
+                'Adjust to real balance',
+                textAlign: TextAlign.center,
+                style: V2Typography.headlineGreeting(size: 22),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Match your current budget with your actual e-wallet.',
+                textAlign: TextAlign.center,
+                style: V2Typography.labelMuted(size: 13),
+              ),
+            ],
+          ),
+        ),
+        const Spacer(),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(
+            horizontalPadding,
+            24,
+            horizontalPadding,
+            16,
+          ),
+          decoration: const BoxDecoration(
+            color: V2Colors.surfaceCard,
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(sheetRadius),
+            ),
+            border: Border(
+              top: BorderSide(color: V2Colors.borderSubtle),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    'Rp ',
+                    style: V2Typography.displayBalance(size: 24)
+                        .copyWith(color: V2Colors.textMuted),
+                  ),
+                  Text(
+                    formatted,
+                    style: V2Typography.displayBalance(size: amountSize).copyWith(
+                      color: _adjustDigits.isEmpty
+                          ? V2Colors.textMuted
+                          : V2Colors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _adjustDigits.isEmpty
+                    ? 'Current: Rp ${_formatRupiah(currentBalance)}'
+                    : 'Diff: ${diff >= 0 ? '+' : '-'}Rp ${_formatRupiah(diff.abs())}',
+                style: V2Typography.labelMuted(size: 12).copyWith(
+                  color: _adjustDigits.isEmpty
+                      ? V2Colors.textMuted
+                      : (diff >= 0
+                          ? V2Colors.semanticPositive
+                          : V2Colors.semanticDanger),
+                ),
+              ),
+              const SizedBox(height: 20),
+              _NumpadRow(
+                keys: const ['1', '2', '3'],
+                keyHeight: keyHeight,
+                keyGap: keyGap,
+                keyRadius: keyRadius,
+                keyFontSize: keyFontSize,
+                onKeyTap: _onKeyTap,
+              ),
+              const SizedBox(height: keyGap),
+              _NumpadRow(
+                keys: const ['4', '5', '6'],
+                keyHeight: keyHeight,
+                keyGap: keyGap,
+                keyRadius: keyRadius,
+                keyFontSize: keyFontSize,
+                onKeyTap: _onKeyTap,
+              ),
+              const SizedBox(height: keyGap),
+              _NumpadRow(
+                keys: const ['7', '8', '9'],
+                keyHeight: keyHeight,
+                keyGap: keyGap,
+                keyRadius: keyRadius,
+                keyFontSize: keyFontSize,
+                onKeyTap: _onKeyTap,
+              ),
+              const SizedBox(height: keyGap),
+              _NumpadRow(
+                keys: const ['.000', '0', 'back'],
+                keyHeight: keyHeight,
+                keyGap: keyGap,
+                keyRadius: keyRadius,
+                keyFontSize: keyFontSize,
+                onKeyTap: _onKeyTap,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
