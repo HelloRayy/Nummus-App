@@ -245,7 +245,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                       ),
                     )
                   : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      padding: EdgeInsets.symmetric(horizontal: c.horizontalPadding),
                       itemCount: _items.length,
                       separatorBuilder: (_, _) => const SizedBox(height: 8),
                       itemBuilder: (context, index) {
@@ -257,7 +257,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: V2Colors.surfaceCard,
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(c.listItemRadius),
                             border: Border.all(color: V2Colors.borderSubtle),
                           ),
                           child: Row(
@@ -313,11 +313,20 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
             // Custom Numpad Sheet
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(12.2, 14, 12.2, 12),
-              decoration: const BoxDecoration(
+              padding: EdgeInsets.fromLTRB(
+                c.horizontalPadding,
+                14,
+                c.horizontalPadding,
+                12,
+              ),
+              decoration: BoxDecoration(
                 color: V2Colors.surfaceCard,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                border: Border(top: BorderSide(color: V2Colors.borderSubtle)),
+                borderRadius: BorderRadius.vertical(
+                  top: Radius.circular(c.sheetRadius),
+                ),
+                border: const Border(
+                  top: BorderSide(color: V2Colors.borderSubtle),
+                ),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -327,7 +336,9 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                       Expanded(
                         child: Text(
                           'Rp ${_formatDigits(_rawDigits)}',
-                          style: V2Typography.displayBalance(size: 26).copyWith(
+                          style: V2Typography.displayBalance(
+                            size: c.displayAmountSize,
+                          ).copyWith(
                             color: _rawDigits.isEmpty
                                 ? V2Colors.textMuted
                                 : V2Colors.textPrimary,
@@ -387,14 +398,35 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _NumpadRow(keys: const ['1', '2', '3'], onKeyTap: _onKeyTap),
-                  const SizedBox(height: 6),
-                  _NumpadRow(keys: const ['4', '5', '6'], onKeyTap: _onKeyTap),
-                  const SizedBox(height: 6),
-                  _NumpadRow(keys: const ['7', '8', '9'], onKeyTap: _onKeyTap),
-                  const SizedBox(height: 6),
+                  _NumpadRow(
+                    keys: const ['1', '2', '3'],
+                    keyHeight: c.keyHeight,
+                    keyGap: c.keyGap,
+                    keyRadius: c.keyRadius,
+                    onKeyTap: _onKeyTap,
+                  ),
+                  SizedBox(height: c.keyGap),
+                  _NumpadRow(
+                    keys: const ['4', '5', '6'],
+                    keyHeight: c.keyHeight,
+                    keyGap: c.keyGap,
+                    keyRadius: c.keyRadius,
+                    onKeyTap: _onKeyTap,
+                  ),
+                  SizedBox(height: c.keyGap),
+                  _NumpadRow(
+                    keys: const ['7', '8', '9'],
+                    keyHeight: c.keyHeight,
+                    keyGap: c.keyGap,
+                    keyRadius: c.keyRadius,
+                    onKeyTap: _onKeyTap,
+                  ),
+                  SizedBox(height: c.keyGap),
                   _NumpadRow(
                     keys: const ['.000', '0', 'back'],
+                    keyHeight: c.keyHeight,
+                    keyGap: c.keyGap,
+                    keyRadius: c.keyRadius,
                     onKeyTap: _onKeyTap,
                   ),
                 ],
@@ -414,9 +446,18 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
 
 class _NumpadRow extends StatelessWidget {
   final List<String> keys;
+  final double keyHeight;
+  final double keyGap;
+  final double keyRadius;
   final ValueChanged<String> onKeyTap;
 
-  const _NumpadRow({required this.keys, required this.onKeyTap});
+  const _NumpadRow({
+    required this.keys,
+    required this.keyHeight,
+    required this.keyGap,
+    required this.keyRadius,
+    required this.onKeyTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -425,15 +466,17 @@ class _NumpadRow extends StatelessWidget {
         final key = keys[index];
         return Expanded(
           child: Padding(
-            padding: EdgeInsets.only(right: index == keys.length - 1 ? 0 : 6),
+            padding: EdgeInsets.only(
+              right: index == keys.length - 1 ? 0 : keyGap,
+            ),
             child: InkWell(
               onTap: () => onKeyTap(key),
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(keyRadius),
               child: Container(
-                height: 48,
+                height: keyHeight,
                 decoration: BoxDecoration(
                   color: V2Colors.surfaceElevated,
-                  borderRadius: BorderRadius.circular(24),
+                  borderRadius: BorderRadius.circular(keyRadius),
                   border: Border.all(color: V2Colors.borderSubtle),
                 ),
                 alignment: Alignment.center,
