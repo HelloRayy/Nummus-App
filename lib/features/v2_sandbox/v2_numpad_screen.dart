@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/v2_tokens.dart';
 import '../budget/repository/budget_repository.dart';
-import 'motion_tuner_hud.dart';
 
 class V2NumpadScreen extends StatefulWidget {
   final BudgetRepository repository;
@@ -20,7 +19,6 @@ class V2NumpadScreen extends StatefulWidget {
 }
 
 class _V2NumpadScreenState extends State<V2NumpadScreen> {
-  final MotionTunerConfig _motionConfig = MotionTunerConfig();
   Timer? _debounceTimer;
   String _rawDigits = '';
   int _debouncedTyped = 0;
@@ -36,14 +34,13 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
   @override
   void dispose() {
     _debounceTimer?.cancel();
-    _motionConfig.dispose();
     super.dispose();
   }
 
   void _scheduleAvailableUpdate() {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(
-      Duration(milliseconds: _motionConfig.debounceMs.round()),
+      const Duration(milliseconds: 500),
       () {
         if (!mounted) return;
         setState(() {
@@ -251,31 +248,26 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  ListenableBuilder(
-                    listenable: _motionConfig,
-                    builder: (_, _) {
-                      final targetAvail =
-                          widget.repository.remainingWeeklySpendable -
-                              _debouncedTyped;
-                      return TweenAnimationBuilder<int>(
-                        tween: IntTween(begin: targetAvail, end: targetAvail),
-                        duration: Duration(
-                          milliseconds: _motionConfig.rollDurationMs.round(),
+                  TweenAnimationBuilder<int>(
+                    tween: IntTween(
+                      begin: widget.repository.remainingWeeklySpendable -
+                          _debouncedTyped,
+                      end: widget.repository.remainingWeeklySpendable -
+                          _debouncedTyped,
+                    ),
+                    duration: const Duration(milliseconds: 400),
+                    curve: Curves.easeOutQuart,
+                    builder: (_, animatedVal, _) {
+                      final isNeg = animatedVal < 0;
+                      final availStr =
+                          '${isNeg ? '-' : ''}Rp ${_formatRupiah(animatedVal.abs().toString())}';
+                      return Text(
+                        'Available: $availStr',
+                        style: V2Typography.labelMuted(size: 12).copyWith(
+                          color: isNeg
+                              ? V2Colors.semanticDanger
+                              : V2Colors.textMuted,
                         ),
-                        curve: _motionConfig.curve,
-                        builder: (_, animatedVal, _) {
-                          final isNeg = animatedVal < 0;
-                          final availStr =
-                              '${isNeg ? '-' : ''}Rp ${_formatRupiah(animatedVal.abs().toString())}';
-                          return Text(
-                            'Available: $availStr',
-                            style: V2Typography.labelMuted(size: 12).copyWith(
-                              color: isNeg
-                                  ? V2Colors.semanticDanger
-                                  : V2Colors.textMuted,
-                            ),
-                          );
-                        },
                       );
                     },
                   ),
@@ -367,7 +359,6 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
             ),
             ],
             ),
-            MotionTunerHud(config: _motionConfig),
           ],
         ),
       ),
