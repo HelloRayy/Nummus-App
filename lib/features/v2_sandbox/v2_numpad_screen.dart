@@ -201,9 +201,23 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  Text(
-                    'Available: ${widget.availableText}',
-                    style: V2Typography.labelMuted(size: 12),
+                  Builder(
+                    builder: (_) {
+                      final typed = int.tryParse(_rawDigits) ?? 0;
+                      final liveAvail =
+                          widget.repository.remainingWeeklySpendable - typed;
+                      final isNeg = liveAvail < 0;
+                      final availStr =
+                          '${isNeg ? '-' : ''}Rp ${_formatRupiah(liveAvail.abs().toString())}';
+                      return Text(
+                        'Available: $availStr',
+                        style: V2Typography.labelMuted(size: 12).copyWith(
+                          color: isNeg
+                              ? V2Colors.semanticDanger
+                              : V2Colors.textMuted,
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
 
