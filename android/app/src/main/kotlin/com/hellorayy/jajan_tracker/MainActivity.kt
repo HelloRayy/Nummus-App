@@ -52,15 +52,24 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, SHOPEE_CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "openShopeePay" -> {
-                    val launchIntent = packageManager.getLaunchIntentForPackage("com.shopeepay.id")
-                        ?: packageManager.getLaunchIntentForPackage("com.shopee.id")
-                    if (launchIntent != null) {
-                        launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        startActivity(launchIntent)
-                        result.success(true)
-                    } else {
-                        result.success(false)
+                    var opened = false
+                    try {
+                        val scanIntent = Intent(Intent.ACTION_VIEW, Uri.parse("shopeepayid://scan")).apply {
+                            setPackage("com.shopeepay.id")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        }
+                        startActivity(scanIntent)
+                        opened = true
+                    } catch (_: Exception) {
+                        val launchIntent = packageManager.getLaunchIntentForPackage("com.shopeepay.id")
+                            ?: packageManager.getLaunchIntentForPackage("com.shopee.id")
+                        if (launchIntent != null) {
+                            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            startActivity(launchIntent)
+                            opened = true
+                        }
                     }
+                    result.success(opened)
                 }
                 "checkOverlayPermission" -> {
                     val granted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
