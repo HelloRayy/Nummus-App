@@ -14,21 +14,16 @@ class V2AddBudgetScreen extends StatefulWidget {
 
 class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
   final PageController _pageController = PageController();
-  int _currentStep = 0;
+  int _activeTab = 0; // 0 = Top-up, 1 = Set Limit
 
-  // Step 1: Add Budget
   String _addBudgetDigits = '';
-
-  // Step 2: Set Limit
-  late double _monthlyLimit;
+  late double _weeklyLimit;
 
   @override
   void initState() {
     super.initState();
     final current = widget.repository.spendableBudget;
-    _monthlyLimit = (current >= 500000 && current <= 15000000)
-        ? current.toDouble()
-        : 3280000;
+    _weeklyLimit = current > 0 ? current.toDouble() : 0.0;
   }
 
   @override
@@ -37,17 +32,11 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
     super.dispose();
   }
 
-  void _goToStep(int step) {
-    if (step == 1) {
-      final added = int.tryParse(_addBudgetDigits) ?? 0;
-      final current = widget.repository.remainingWeeklySpendable;
-      final total = (current > 0 ? current : 0) + added;
-      _monthlyLimit = total.toDouble();
-    }
-    setState(() => _currentStep = step);
+  void _switchTab(int tab) {
+    setState(() => _activeTab = tab);
     _pageController.animateToPage(
-      step,
-      duration: const Duration(milliseconds: 280),
+      tab,
+      duration: const Duration(milliseconds: 240),
       curve: Curves.easeOutCubic,
     );
   }
@@ -98,20 +87,14 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top Bar with Step Indicator
+            // Top Bar with Back + Segmented Tab (Top-up | Set Limit)
             Padding(
               padding: const EdgeInsets.fromLTRB(12.2, 12, 12.2, 0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   InkWell(
-                    onTap: () {
-                      if (_currentStep == 1) {
-                        _goToStep(0);
-                      } else {
-                        Navigator.pop(context);
-                      }
-                    },
+                    onTap: () => Navigator.pop(context),
                     borderRadius: BorderRadius.circular(999),
                     child: Container(
                       width: 44,
@@ -129,22 +112,27 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
                       color: V2Colors.surfaceCard,
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(color: V2Colors.borderSubtle),
                     ),
-                    child: Text(
-                      'Step ${_currentStep + 1} of 2',
-                      style: const TextStyle(
-                        color: V2Colors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    child: Row(
+                      children: [
+                        _TabPill(
+                          label: 'Top-up',
+                          active: _activeTab == 0,
+                          activeColor: V2Colors.semanticPositive,
+                          onTap: () => _switchTab(0),
+                        ),
+                        _TabPill(
+                          label: 'Set Limit',
+                          active: _activeTab == 1,
+                          activeColor: V2Colors.accentPrimary,
+                          onTap: () => _switchTab(1),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -154,10 +142,10 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
             Expanded(
               child: PageView(
                 controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
+                onPageChanged: (index) => setState(() => _activeTab = index),
                 children: [
-                  _buildStep1AddBudget(),
-                  _buildStep2SetLimit(),
+                  _buildTopUpTab(),
+                  _buildSetLimitTab(),
                 ],
               ),
             ),
@@ -167,8 +155,10 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
     );
   }
 
-  Widget _buildStep1AddBudget() {
+  Widget _buildTopUpTab() {
     const double horizontalPadding = 12.2;
+    const double sheetRadius = 40.0;
+    const double amountSize = 58.0;
     const double keyHeight = 60.5;
     const double keyGap = 6.0;
     const double keyRadius = 28.0;
@@ -177,9 +167,6 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
 
     final addedAmount = int.tryParse(_addBudgetDigits) ?? 0;
     final formatted = _formatRupiah(addedAmount);
-
-    const double sheetRadius = 40.0;
-    const double amountSize = 58.0;
 
     return Column(
       children: [
@@ -249,8 +236,6 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                 style: V2Typography.labelMuted(size: 12),
               ),
               const SizedBox(height: 20),
-
-              // Custom Numpad
               _NumpadRow(
                 keys: const ['1', '2', '3'],
                 keyHeight: keyHeight,
@@ -287,66 +272,43 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                 onKeyTap: _onKeyTap,
               ),
               const SizedBox(height: 16),
-
-              // 2 CTAs: Lewati & Tambah
-              Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () {
-                        setState(() => _addBudgetDigits = '');
-                        _goToStep(1);
+              InkWell(
+                onTap: addedAmount == 0
+                    ? null
+                    : () async {
+                        await widget.repository.addTopUp(addedAmount);
+                        if (!mounted) return;
+                        Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Added budget: +Rp $formatted'),
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
                       },
-                      borderRadius: BorderRadius.circular(999),
-                      child: Container(
-                        height: ctaHeight,
-                        decoration: BoxDecoration(
-                          color: V2Colors.surfaceElevated,
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: V2Colors.borderSubtle),
-                        ),
-                        alignment: Alignment.center,
-                        child: const Text(
-                          'Lewati',
-                          style: TextStyle(
-                            color: V2Colors.textSecondary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+                borderRadius: BorderRadius.circular(999),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  height: ctaHeight,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: addedAmount == 0
+                        ? V2Colors.surfaceElevated
+                        : V2Colors.semanticPositive,
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Add Budget',
+                    style: TextStyle(
+                      color: addedAmount == 0
+                          ? V2Colors.textMuted
+                          : V2Colors.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    flex: 2,
-                    child: InkWell(
-                      onTap: addedAmount == 0 ? null : () => _goToStep(1),
-                      borderRadius: BorderRadius.circular(999),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 180),
-                        height: ctaHeight,
-                        decoration: BoxDecoration(
-                          color: addedAmount == 0
-                              ? V2Colors.surfaceElevated
-                              : V2Colors.semanticPositive,
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          'Tambah',
-                          style: TextStyle(
-                            color: addedAmount == 0
-                                ? V2Colors.textMuted
-                                : V2Colors.textPrimary,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),
@@ -355,12 +317,11 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
     );
   }
 
-  Widget _buildStep2SetLimit() {
-    final addedAmount = int.tryParse(_addBudgetDigits) ?? 0;
+  Widget _buildSetLimitTab() {
     final currentAvailable = widget.repository.remainingWeeklySpendable;
-    final totalPool = (currentAvailable > 0 ? currentAvailable : 0) + addedAmount;
+    final totalPool = currentAvailable > 0 ? currentAvailable : 0;
     final maxSlider = (totalPool > 0 ? totalPool : 1000000).toDouble();
-    final activeLimit = _monthlyLimit.clamp(0.0, maxSlider);
+    final activeLimit = _weeklyLimit.clamp(0.0, maxSlider);
 
     final now = DateTime.now();
     final remainingDays = (8 - now.weekday).clamp(1, 7);
@@ -378,14 +339,10 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            addedAmount > 0
-                ? 'Total budget: Rp ${_formatRupiah(totalPool)} (+Rp ${_formatRupiah(addedAmount)})'
-                : 'Total budget: Rp ${_formatRupiah(totalPool)}',
+            'Total budget: Rp ${_formatRupiah(totalPool)}',
             style: V2Typography.labelMuted(size: 13),
           ),
           const SizedBox(height: 24),
-
-          // Limit Card + Daily Breakdown
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -421,7 +378,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                     inactiveColor: V2Colors.borderSubtle,
                     onChanged: (v) {
                       final snapped = ((v / 1000).round() * 1000).toDouble();
-                      setState(() => _monthlyLimit = snapped);
+                      setState(() => _weeklyLimit = snapped);
                     },
                   ),
                 ),
@@ -464,25 +421,19 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
               ],
             ),
           ),
-
           const Spacer(),
-
-          // Save & Finish CTA
           InkWell(
             onTap: () async {
-              if (addedAmount > 0) {
-                await widget.repository.addTopUp(addedAmount);
-              }
               await widget.repository.updateBudget(
                 weeklyIncome: totalPool,
                 weeklySavingsTarget: savings,
               );
-              if (!context.mounted) return;
+              if (!mounted) return;
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Limit set: Rp ${_formatRupiah(_monthlyLimit.round())} (Rp ${_formatRupiah(dailyLimit)}/hari)',
+                    'Limit updated: Rp ${_formatRupiah(activeLimit.round())} (Rp ${_formatRupiah(dailyLimit)}/hari)',
                   ),
                   duration: const Duration(seconds: 2),
                 ),
@@ -498,7 +449,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
               ),
               alignment: Alignment.center,
               child: const Text(
-                'Save & Finish',
+                'Update Limit',
                 style: TextStyle(
                   color: V2Colors.bgPrimary,
                   fontSize: 16,
@@ -508,6 +459,43 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TabPill extends StatelessWidget {
+  final String label;
+  final bool active;
+  final Color activeColor;
+  final VoidCallback onTap;
+
+  const _TabPill({
+    required this.label,
+    required this.active,
+    required this.activeColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: active ? activeColor.withValues(alpha: 0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: active ? activeColor : V2Colors.textMuted,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
       ),
     );
   }
