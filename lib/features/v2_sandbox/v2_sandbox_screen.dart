@@ -7,6 +7,7 @@ import 'components/v2_header_greeting.dart';
 import 'components/v2_recent_transactions.dart';
 import 'components/v2_spending_tracker_card.dart';
 import 'v2_add_budget_screen.dart';
+import 'v2_budget_planner_screen.dart';
 import 'v2_numpad_screen.dart';
 
 class V2SandboxScreen extends StatelessWidget {
@@ -111,6 +112,14 @@ class V2SandboxScreen extends StatelessWidget {
                   onMenuSelect: (item) {
                     if (item == 'Budget') {
                       _openAddBudget(context);
+                    } else if (item == 'Planner') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              V2BudgetPlannerScreen(repository: repository),
+                        ),
+                      );
                     } else if (item == 'Settings') {
                       showDialog(
                         context: context,

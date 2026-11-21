@@ -24,7 +24,7 @@ class _V2BottomActionBarState extends State<V2BottomActionBar>
   static const _menuItems = [
     (label: 'Settings', icon: Icons.settings_outlined),
     (label: 'Budget', icon: Icons.account_balance_wallet_outlined),
-    (label: 'Statistics', icon: Icons.bar_chart_rounded),
+    (label: 'Planner', icon: Icons.checklist_rounded),
     (label: 'Dashboard', icon: Icons.grid_view_rounded),
   ];
 
