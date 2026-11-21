@@ -40,7 +40,7 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
 
   void _scheduleBalanceUpdate() {
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 200), () {
       if (!mounted) return;
       setState(() {
         _debouncedAdded = int.tryParse(_addBudgetDigits) ?? 0;

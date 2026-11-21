@@ -40,7 +40,7 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
   void _scheduleAvailableUpdate() {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(
-      const Duration(milliseconds: 500),
+      const Duration(milliseconds: 200),
       () {
         if (!mounted) return;
         setState(() {
@@ -248,26 +248,29 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  TweenAnimationBuilder<int>(
-                    tween: IntTween(
-                      begin: widget.repository.remainingWeeklySpendable -
-                          _debouncedTyped,
-                      end: widget.repository.remainingWeeklySpendable -
-                          _debouncedTyped,
-                    ),
-                    duration: const Duration(milliseconds: 400),
-                    curve: Curves.easeOutQuart,
-                    builder: (_, animatedVal, _) {
-                      final isNeg = animatedVal < 0;
-                      final availStr =
-                          '${isNeg ? '-' : ''}Rp ${_formatRupiah(animatedVal.abs().toString())}';
-                      return Text(
-                        'Available: $availStr',
-                        style: V2Typography.labelMuted(size: 12).copyWith(
-                          color: isNeg
-                              ? V2Colors.semanticDanger
-                              : V2Colors.textMuted,
-                        ),
+                  Builder(
+                    builder: (_) {
+                      final rawToday = widget.repository.remainingToday;
+                      final baseToday =
+                          rawToday > 0 ? (rawToday ~/ 500) * 500 : rawToday;
+                      final targetDay = baseToday - _debouncedTyped;
+                      return TweenAnimationBuilder<int>(
+                        tween: IntTween(begin: targetDay, end: targetDay),
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.easeOutQuart,
+                        builder: (_, animatedVal, _) {
+                          final isNeg = animatedVal < 0;
+                          final dayStr =
+                              '${isNeg ? '-' : ''}Rp ${_formatRupiah(animatedVal.abs().toString())}';
+                          return Text(
+                            'Day budget: $dayStr',
+                            style: V2Typography.labelMuted(size: 12).copyWith(
+                              color: isNeg
+                                  ? V2Colors.semanticDanger
+                                  : V2Colors.textMuted,
+                            ),
+                          );
+                        },
                       );
                     },
                   ),
