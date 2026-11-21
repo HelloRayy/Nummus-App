@@ -365,6 +365,8 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                 ],
               ),
             ),
+            ],
+            ),
             MotionTunerHud(config: _motionConfig),
           ],
         ),
