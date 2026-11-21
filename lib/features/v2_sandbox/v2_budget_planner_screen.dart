@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/theme/v2_tokens.dart';
 import '../budget/repository/budget_repository.dart';
 
@@ -25,20 +26,42 @@ class V2BudgetPlannerScreen extends StatefulWidget {
 
 class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   final List<_PlanItem> _items = [];
-  final TextEditingController _amountController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
-  final FocusNode _amountFocus = FocusNode();
+  String _rawDigits = '';
 
   @override
   void dispose() {
-    _amountController.dispose();
     _titleController.dispose();
-    _amountFocus.dispose();
     super.dispose();
   }
 
+  void _onKeyTap(String key) {
+    HapticFeedback.lightImpact();
+    setState(() {
+      if (key == 'back') {
+        if (_rawDigits.isNotEmpty) {
+          _rawDigits = _rawDigits.substring(0, _rawDigits.length - 1);
+        }
+        return;
+      }
+      if (key == '.000') {
+        if (_rawDigits.isEmpty || _rawDigits == '0') return;
+        if (_rawDigits.length + 3 <= 12) {
+          _rawDigits += '000';
+        }
+        return;
+      }
+      if (_rawDigits.length >= 12) return;
+      if (_rawDigits == '0') {
+        _rawDigits = key;
+      } else {
+        _rawDigits += key;
+      }
+    });
+  }
+
   String _formatDigits(String digits) {
-    if (digits.isEmpty) return '';
+    if (digits.isEmpty) return '0';
     final buffer = StringBuffer();
     for (int i = 0; i < digits.length; i++) {
       final reverseIndex = digits.length - 1 - i;
@@ -47,40 +70,19 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
         buffer.write('.');
       }
     }
-    return 'Rp ${buffer.toString()}';
+    return buffer.toString();
   }
 
   String _formatRp(int amount) {
     final isNeg = amount < 0;
-    final digits = amount.abs().toString();
-    final buffer = StringBuffer();
-    for (int i = 0; i < digits.length; i++) {
-      final reverseIndex = digits.length - 1 - i;
-      buffer.write(digits[i]);
-      if (reverseIndex > 0 && reverseIndex % 3 == 0) {
-        buffer.write('.');
-      }
-    }
-    return '${isNeg ? '-' : ''}Rp ${buffer.toString()}';
-  }
-
-  void _onAmountChanged(String value) {
-    final digits = value.replaceAll(RegExp(r'[^0-9]'), '');
-    final formatted = _formatDigits(digits);
-    if (formatted != value) {
-      _amountController.value = TextEditingValue(
-        text: formatted,
-        selection: TextSelection.collapsed(offset: formatted.length),
-      );
-    }
+    return '${isNeg ? '-' : ''}Rp ${_formatDigits(amount.abs().toString())}';
   }
 
   void _addItem() {
-    final rawAmount =
-        _amountController.text.replaceAll(RegExp(r'[^0-9]'), '');
-    final amount = int.tryParse(rawAmount) ?? 0;
+    final amount = int.tryParse(_rawDigits) ?? 0;
     if (amount <= 0) return;
 
+    HapticFeedback.mediumImpact();
     final customTitle = _titleController.text.trim();
     final title =
         customTitle.isNotEmpty ? customTitle : 'Plan #${_items.length + 1}';
@@ -94,10 +96,9 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
           amount: amount,
         ),
       );
-      _amountController.clear();
+      _rawDigits = '';
       _titleController.clear();
     });
-    _amountFocus.requestFocus();
   }
 
   Future<void> _convertToExpense(_PlanItem item) async {
@@ -211,67 +212,52 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
               ),
             ),
 
-            const SizedBox(height: 14),
+            const SizedBox(height: 12),
 
             // Summary Card
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
                   color: V2Colors.surfaceCard,
-                  borderRadius: BorderRadius.circular(22),
+                  borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: V2Colors.borderSubtle),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      'Remaining after plan',
-                      style: V2Typography.labelMuted(size: 12),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatRp(finalRemaining),
-                      style: V2Typography.displayBalance(size: 28).copyWith(
-                        color: isOver
-                            ? V2Colors.semanticDanger
-                            : V2Colors.semanticPositive,
-                      ),
-                    ),
-                    const Divider(color: V2Colors.borderSubtle, height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Budget current',
-                              style: V2Typography.labelMuted(size: 11),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              _formatRp(budgetCurrent),
-                              style: V2Typography.displayBalance(size: 15),
-                            ),
-                          ],
+                        Text(
+                          'Remaining after plan',
+                          style: V2Typography.labelMuted(size: 11),
                         ),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              'Total planned',
-                              style: V2Typography.labelMuted(size: 11),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '-${_formatRp(totalPlanned)}',
-                              style: V2Typography.displayBalance(size: 15)
-                                  .copyWith(color: V2Colors.semanticWarning),
-                            ),
-                          ],
+                        const SizedBox(height: 2),
+                        Text(
+                          _formatRp(finalRemaining),
+                          style: V2Typography.displayBalance(size: 22).copyWith(
+                            color: isOver
+                                ? V2Colors.semanticDanger
+                                : V2Colors.semanticPositive,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          'Planned: -${_formatRp(totalPlanned)}',
+                          style: V2Typography.labelMuted(size: 11)
+                              .copyWith(color: V2Colors.semanticWarning),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Current: ${_formatRp(budgetCurrent)}',
+                          style: V2Typography.labelMuted(size: 11),
                         ),
                       ],
                     ),
@@ -280,14 +266,14 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
               ),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
             // Planned Items List
             Expanded(
               child: _items.isEmpty
                   ? Center(
                       child: Text(
-                        'Type amount below & press Enter to add',
+                        'Tap numpad below & press + to add plan',
                         style: V2Typography.labelMuted(size: 13),
                       ),
                     )
@@ -300,11 +286,11 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                         return Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 14,
-                            vertical: 10,
+                            vertical: 8,
                           ),
                           decoration: BoxDecoration(
                             color: V2Colors.surfaceCard,
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(14),
                             border: Border.all(color: V2Colors.borderSubtle),
                           ),
                           child: Row(
@@ -315,13 +301,12 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                                   children: [
                                     Text(
                                       item.title,
-                                      style: V2Typography.cardTitle(size: 14),
+                                      style: V2Typography.cardTitle(size: 13),
                                     ),
-                                    const SizedBox(height: 2),
                                     Text(
                                       '-${_formatRp(item.amount)}',
                                       style: V2Typography.displayBalance(
-                                        size: 14,
+                                        size: 13,
                                       ).copyWith(
                                         color: V2Colors.semanticWarning,
                                       ),
@@ -330,15 +315,17 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                                 ),
                               ),
                               IconButton(
+                                visualDensity: VisualDensity.compact,
                                 tooltip: 'Convert to Expense',
                                 onPressed: () => _convertToExpense(item),
                                 icon: const Icon(
                                   Icons.check_circle_outline_rounded,
                                   color: V2Colors.semanticPositive,
-                                  size: 22,
+                                  size: 20,
                                 ),
                               ),
                               IconButton(
+                                visualDensity: VisualDensity.compact,
                                 tooltip: 'Remove',
                                 onPressed: () {
                                   setState(() => _items.removeAt(index));
@@ -346,7 +333,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                                 icon: const Icon(
                                   Icons.delete_outline_rounded,
                                   color: V2Colors.textMuted,
-                                  size: 20,
+                                  size: 18,
                                 ),
                               ),
                             ],
@@ -356,99 +343,92 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                     ),
             ),
 
-            // Rapid-Entry Bar (Auto-focus Amount + Optional Name + Enter)
+            // Custom Numpad Sheet
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(12.2, 14, 12.2, 12),
               decoration: const BoxDecoration(
                 color: V2Colors.surfaceCard,
-                border: Border(
-                  top: BorderSide(color: V2Colors.borderSubtle),
-                ),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                border: Border(top: BorderSide(color: V2Colors.borderSubtle)),
               ),
-              child: Row(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    flex: 3,
-                    child: TextField(
-                      controller: _amountController,
-                      focusNode: _amountFocus,
-                      autofocus: true,
-                      keyboardType: TextInputType.number,
-                      textInputAction: TextInputAction.done,
-                      onChanged: _onAmountChanged,
-                      onSubmitted: (_) => _addItem(),
-                      style: V2Typography.displayBalance(size: 15),
-                      decoration: InputDecoration(
-                        hintText: 'Rp 0',
-                        hintStyle: const TextStyle(color: V2Colors.textMuted),
-                        filled: true,
-                        fillColor: V2Colors.surfaceElevated,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 12,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide:
-                              const BorderSide(color: V2Colors.borderSubtle),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide:
-                              const BorderSide(color: V2Colors.accentPrimary),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'Rp ${_formatDigits(_rawDigits)}',
+                          style: V2Typography.displayBalance(size: 26).copyWith(
+                            color: _rawDigits.isEmpty
+                                ? V2Colors.textMuted
+                                : V2Colors.textPrimary,
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    flex: 2,
-                    child: TextField(
-                      controller: _titleController,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _addItem(),
-                      style: const TextStyle(
-                        color: V2Colors.textPrimary,
-                        fontSize: 13,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Note (opt)',
-                        hintStyle: const TextStyle(color: V2Colors.textMuted),
-                        filled: true,
-                        fillColor: V2Colors.surfaceElevated,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide:
-                              const BorderSide(color: V2Colors.borderSubtle),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                          borderSide:
-                              const BorderSide(color: V2Colors.accentPrimary),
+                      SizedBox(
+                        width: 110,
+                        child: TextField(
+                          controller: _titleController,
+                          style: const TextStyle(
+                            color: V2Colors.textPrimary,
+                            fontSize: 12,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Note (opt)',
+                            hintStyle: const TextStyle(
+                              color: V2Colors.textMuted,
+                              fontSize: 12,
+                            ),
+                            filled: true,
+                            fillColor: V2Colors.surfaceElevated,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 10,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: _addItem,
-                    borderRadius: BorderRadius.circular(14),
-                    child: Container(
-                      width: 46,
-                      height: 46,
-                      decoration: BoxDecoration(
-                        color: V2Colors.accentPrimary,
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: _rawDigits.isEmpty ? null : _addItem,
                         borderRadius: BorderRadius.circular(14),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 160),
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: _rawDigits.isEmpty
+                                ? V2Colors.surfaceElevated
+                                : V2Colors.accentPrimary,
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Icon(
+                            Icons.add_rounded,
+                            color: _rawDigits.isEmpty
+                                ? V2Colors.textMuted
+                                : V2Colors.bgPrimary,
+                          ),
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.keyboard_return_rounded,
-                        color: V2Colors.bgPrimary,
-                      ),
-                    ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _NumpadRow(keys: const ['1', '2', '3'], onKeyTap: _onKeyTap),
+                  const SizedBox(height: 6),
+                  _NumpadRow(keys: const ['4', '5', '6'], onKeyTap: _onKeyTap),
+                  const SizedBox(height: 6),
+                  _NumpadRow(keys: const ['7', '8', '9'], onKeyTap: _onKeyTap),
+                  const SizedBox(height: 6),
+                  _NumpadRow(
+                    keys: const ['.000', '0', 'back'],
+                    onKeyTap: _onKeyTap,
                   ),
                 ],
               ),
@@ -456,6 +436,52 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _NumpadRow extends StatelessWidget {
+  final List<String> keys;
+  final ValueChanged<String> onKeyTap;
+
+  const _NumpadRow({required this.keys, required this.onKeyTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(keys.length, (index) {
+        final key = keys[index];
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: index == keys.length - 1 ? 0 : 6),
+            child: InkWell(
+              onTap: () => onKeyTap(key),
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: V2Colors.surfaceElevated,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: V2Colors.borderSubtle),
+                ),
+                alignment: Alignment.center,
+                child: key == 'back'
+                    ? const Icon(
+                        Icons.backspace_outlined,
+                        color: V2Colors.textPrimary,
+                        size: 18,
+                      )
+                    : Text(
+                        key,
+                        style: V2Typography.displayBalance(
+                          size: key == '.000' ? 15 : 18,
+                        ).copyWith(fontWeight: FontWeight.w500),
+                      ),
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 }
