@@ -302,64 +302,81 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Top Bar with Save (selectedCount) on top-right
+            // Top Bar with fixed-center Trip Planner title
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  InkWell(
-                    onTap: () => Navigator.pop(context),
-                    borderRadius: BorderRadius.circular(999),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: V2Colors.surfaceCard,
-                        border: Border.all(color: V2Colors.borderSubtle),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back_rounded,
-                        color: V2Colors.textPrimary,
-                        size: 20,
-                      ),
-                    ),
-                  ),
-                  Text('Trip Planner', style: V2Typography.cardTitle(size: 16)),
-                  InkWell(
-                    onTap: selectedCount == 0 ? null : _saveSelectedToExpenses,
-                    borderRadius: BorderRadius.circular(999),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 160),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: selectedCount == 0
-                            ? V2Colors.surfaceCard
-                            : V2Colors.semanticPositive,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: selectedCount == 0
-                              ? V2Colors.borderSubtle
-                              : V2Colors.semanticPositive,
-                        ),
-                      ),
+              child: SizedBox(
+                height: 44,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Center(
                       child: Text(
-                        selectedCount == 0 ? 'Save' : 'Save ($selectedCount)',
-                        style: TextStyle(
-                          color: selectedCount == 0
-                              ? V2Colors.textMuted
-                              : V2Colors.textPrimary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        'Trip Planner',
+                        style: V2Typography.cardTitle(size: 16),
                       ),
                     ),
-                  ),
-                ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        InkWell(
+                          onTap: () => Navigator.pop(context),
+                          borderRadius: BorderRadius.circular(999),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: V2Colors.surfaceCard,
+                              border: Border.all(color: V2Colors.borderSubtle),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back_rounded,
+                              color: V2Colors.textPrimary,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                        InkWell(
+                          onTap: selectedCount == 0
+                              ? null
+                              : _saveSelectedToExpenses,
+                          borderRadius: BorderRadius.circular(999),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: selectedCount == 0
+                                  ? V2Colors.surfaceCard
+                                  : V2Colors.semanticPositive,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: selectedCount == 0
+                                    ? V2Colors.borderSubtle
+                                    : V2Colors.semanticPositive,
+                              ),
+                            ),
+                            child: Text(
+                              selectedCount == 0
+                                  ? 'Save'
+                                  : 'Save ($selectedCount)',
+                              style: TextStyle(
+                                color: selectedCount == 0
+                                    ? V2Colors.textMuted
+                                    : V2Colors.textPrimary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
 
