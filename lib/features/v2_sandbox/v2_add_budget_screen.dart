@@ -231,9 +231,33 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                 ],
               ),
               const SizedBox(height: 6),
-              Text(
-                'Current balance: Rp ${_formatRupiah(widget.repository.remainingWeeklySpendable)}',
-                style: V2Typography.labelMuted(size: 12),
+              Builder(
+                builder: (_) {
+                  final base = widget.repository.remainingWeeklySpendable;
+                  final live = base + addedAmount;
+                  final isAdding = addedAmount > 0;
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (isAdding) ...[
+                        const Icon(
+                          Icons.arrow_upward_rounded,
+                          size: 14,
+                          color: V2Colors.semanticPositive,
+                        ),
+                        const SizedBox(width: 4),
+                      ],
+                      Text(
+                        'Current balance: Rp ${_formatRupiah(live)}',
+                        style: V2Typography.labelMuted(size: 12).copyWith(
+                          color: isAdding
+                              ? V2Colors.semanticPositive
+                              : V2Colors.textMuted,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
               const SizedBox(height: 20),
               _NumpadRow(
