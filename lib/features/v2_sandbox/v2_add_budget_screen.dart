@@ -82,57 +82,165 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final addedAmount = int.tryParse(_addBudgetDigits) ?? 0;
+    final canSaveTopUp = _activeTab == 0 && addedAmount > 0;
+    final canSave = _activeTab == 1 || canSaveTopUp;
+
     return Scaffold(
       backgroundColor: V2Colors.bgPrimary,
       body: SafeArea(
         child: Column(
           children: [
-            // Top Bar with Back + Segmented Tab (Top-up | Set Limit)
+            // Top Bar: Back + Centered Title + Top-right Save CTA
             Padding(
               padding: const EdgeInsets.fromLTRB(12.2, 12, 12.2, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  InkWell(
-                    onTap: () => Navigator.pop(context),
-                    borderRadius: BorderRadius.circular(999),
-                    child: Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: V2Colors.surfaceCard,
-                        border: Border.all(color: V2Colors.borderSubtle),
-                      ),
-                      child: const Icon(
-                        Icons.arrow_back_rounded,
-                        color: V2Colors.textPrimary,
-                        size: 20,
+              child: SizedBox(
+                height: 44,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Center(
+                      child: Text(
+                        'Budget',
+                        style: V2Typography.cardTitle(size: 16),
                       ),
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: V2Colors.surfaceCard,
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: V2Colors.borderSubtle),
-                    ),
-                    child: Row(
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _TabPill(
-                          label: 'Top-up',
-                          active: _activeTab == 0,
-                          activeColor: V2Colors.semanticPositive,
-                          onTap: () => _switchTab(0),
+                        InkWell(
+                          onTap: () => Navigator.pop(context),
+                          borderRadius: BorderRadius.circular(999),
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: V2Colors.surfaceCard,
+                              border: Border.all(color: V2Colors.borderSubtle),
+                            ),
+                            child: const Icon(
+                              Icons.arrow_back_rounded,
+                              color: V2Colors.textPrimary,
+                              size: 20,
+                            ),
+                          ),
                         ),
-                        _TabPill(
-                          label: 'Set Limit',
-                          active: _activeTab == 1,
-                          activeColor: V2Colors.accentPrimary,
-                          onTap: () => _switchTab(1),
+                        InkWell(
+                          onTap: !canSave
+                              ? null
+                              : () async {
+                                  if (_activeTab == 0) {
+                                    await widget.repository
+                                        .addTopUp(addedAmount);
+                                    if (!context.mounted) return;
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Added budget: +Rp ${_formatRupiah(addedAmount)}',
+                                        ),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  } else {
+                                    final currentAvailable = widget.repository
+                                        .remainingWeeklySpendable;
+                                    final totalPool = currentAvailable > 0
+                                        ? currentAvailable
+                                        : 0;
+                                    final maxSlider =
+                                        (totalPool > 0 ? totalPool : 1000000)
+                                            .toDouble();
+                                    final activeLimit =
+                                        _weeklyLimit.clamp(0.0, maxSlider);
+                                    final savings =
+                                        (totalPool - activeLimit.round())
+                                            .clamp(0, totalPool);
+                                    await widget.repository.updateBudget(
+                                      weeklyIncome: totalPool,
+                                      weeklySavingsTarget: savings,
+                                    );
+                                    if (!context.mounted) return;
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          'Limit updated: Rp ${_formatRupiah(activeLimit.round())}',
+                                        ),
+                                        duration: const Duration(seconds: 2),
+                                      ),
+                                    );
+                                  }
+                                },
+                          borderRadius: BorderRadius.circular(999),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: !canSave
+                                  ? V2Colors.surfaceCard
+                                  : (_activeTab == 0
+                                      ? V2Colors.semanticPositive
+                                      : V2Colors.accentPrimary),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: !canSave
+                                    ? V2Colors.borderSubtle
+                                    : (_activeTab == 0
+                                        ? V2Colors.semanticPositive
+                                        : V2Colors.accentPrimary),
+                              ),
+                            ),
+                            child: Text(
+                              'Save',
+                              style: TextStyle(
+                                color: !canSave
+                                    ? V2Colors.textMuted
+                                    : (_activeTab == 0
+                                        ? V2Colors.textPrimary
+                                        : V2Colors.bgPrimary),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Full-width Underline Tab Bar
+            Container(
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: V2Colors.borderSubtle),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _UnderlineTab(
+                      label: 'Top-up',
+                      active: _activeTab == 0,
+                      activeColor: V2Colors.accentPrimary,
+                      onTap: () => _switchTab(0),
+                    ),
+                  ),
+                  Expanded(
+                    child: _UnderlineTab(
+                      label: 'Set Limit',
+                      active: _activeTab == 1,
+                      activeColor: V2Colors.accentPrimary,
+                      onTap: () => _switchTab(1),
                     ),
                   ),
                 ],
@@ -488,13 +596,13 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
   }
 }
 
-class _TabPill extends StatelessWidget {
+class _UnderlineTab extends StatelessWidget {
   final String label;
   final bool active;
   final Color activeColor;
   final VoidCallback onTap;
 
-  const _TabPill({
+  const _UnderlineTab({
     required this.label,
     required this.active,
     required this.activeColor,
@@ -504,22 +612,32 @@ class _TabPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: active ? activeColor.withValues(alpha: 0.2) : Colors.transparent,
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: active ? activeColor : V2Colors.textMuted,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: active ? activeColor : V2Colors.textMuted,
+                fontSize: 14,
+                fontWeight: active ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
           ),
-        ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 2.5,
+            width: active ? 72 : 0,
+            decoration: BoxDecoration(
+              color: activeColor,
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+        ],
       ),
     );
   }

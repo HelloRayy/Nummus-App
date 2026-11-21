@@ -113,22 +113,58 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                       ),
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: V2Colors.surfaceCard,
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: V2Colors.borderSubtle),
-                    ),
-                    child: const Text(
-                      'Today',
-                      style: TextStyle(
-                        color: V2Colors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                  InkWell(
+                    onTap: _rawDigits.isEmpty
+                        ? null
+                        : () async {
+                            final amount = int.tryParse(_rawDigits) ?? 0;
+                            if (amount <= 0) return;
+                            final catName = _selectedCategory == null
+                                ? null
+                                : _categories[_selectedCategory!].label;
+                            await widget.repository.addExpense(
+                              amount,
+                              categoryId: catName,
+                              note: catName ?? 'Expense',
+                            );
+                            if (!context.mounted) return;
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Saved ${catName ?? 'Expense'}: Rp $formatted',
+                                ),
+                                duration: const Duration(seconds: 2),
+                              ),
+                            );
+                          },
+                    borderRadius: BorderRadius.circular(999),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 160),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _rawDigits.isEmpty
+                            ? V2Colors.surfaceCard
+                            : V2Colors.accentPrimary,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: _rawDigits.isEmpty
+                              ? V2Colors.borderSubtle
+                              : V2Colors.accentPrimary,
+                        ),
+                      ),
+                      child: Text(
+                        'Save',
+                        style: TextStyle(
+                          color: _rawDigits.isEmpty
+                              ? V2Colors.textMuted
+                              : V2Colors.bgPrimary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
@@ -301,58 +337,6 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                     keyRadius: keyRadius,
                     keyFontSize: keyFontSize,
                     onKeyTap: _onKeyTap,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Primary CTA
-                  InkWell(
-                    onTap: _rawDigits.isEmpty
-                        ? null
-                        : () async {
-                            final amount = int.tryParse(_rawDigits) ?? 0;
-                            if (amount <= 0) return;
-                            final catName = _selectedCategory == null
-                                ? null
-                                : _categories[_selectedCategory!].label;
-                            await widget.repository.addExpense(
-                              amount,
-                              categoryId: catName,
-                              note: catName ?? 'Expense',
-                            );
-                            if (!context.mounted) return;
-                            Navigator.pop(context);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Saved ${catName ?? 'Expense'}: Rp $formatted',
-                                ),
-                                duration: const Duration(seconds: 2),
-                              ),
-                            );
-                          },
-                    borderRadius: BorderRadius.circular(999),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      height: ctaHeight,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: _rawDigits.isEmpty
-                            ? V2Colors.surfaceElevated
-                            : V2Colors.accentPrimary,
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Save Expense',
-                        style: TextStyle(
-                          color: _rawDigits.isEmpty
-                              ? V2Colors.textMuted
-                              : V2Colors.bgPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),
