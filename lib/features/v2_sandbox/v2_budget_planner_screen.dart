@@ -36,6 +36,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   String? _editingId;
   String _sortMode = 'oldest'; // 'oldest' | 'highest' | 'lowest'
   final TextEditingController _editController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
 
   static const String _draftKey = 'v2_planner_draft';
 
@@ -89,6 +90,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   @override
   void dispose() {
     _editController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -152,6 +154,17 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
       _rawDigits = '';
     });
     _saveDraft();
+    if (_sortMode == 'oldest') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 240),
+            curve: Curves.easeOutCubic,
+          );
+        }
+      });
+    }
   }
 
   void _applySort() {
@@ -325,6 +338,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
             // Scrollable Card + Flat Todo List
             Expanded(
               child: ListView(
+                controller: _scrollController,
                 children: [
                   V2SpendingTrackerCard(
                     availableText: _formatRp(finalRemaining),
