@@ -117,34 +117,47 @@ class V2SpendingTrackerCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Available this week',
-                      style: V2Typography.labelMuted(),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      availableText,
-                      style: V2Typography.displayBalance(size: amountSize)
-                          .copyWith(color: V2Colors.semanticPositive),
-                    ),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Available this week',
+                        style: V2Typography.labelMuted(),
+                      ),
+                      const SizedBox(height: 4),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          availableText,
+                          style: V2Typography.displayBalance(size: amountSize)
+                              .copyWith(color: V2Colors.semanticPositive),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      'Day budget',
-                      style: V2Typography.labelMuted(),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      limitText,
-                      style: V2Typography.displayBalance(size: amountSize),
-                    ),
-                  ],
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Day budget',
+                        style: V2Typography.labelMuted(),
+                      ),
+                      const SizedBox(height: 4),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          limitText,
+                          style: V2Typography.displayBalance(size: amountSize),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
