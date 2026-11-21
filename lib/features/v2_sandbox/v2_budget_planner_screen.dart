@@ -618,6 +618,22 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    GestureDetector(
+                      onVerticalDragEnd: (details) {
+                        if ((details.primaryVelocity ?? 0) > 150) {
+                          setState(() => _showNumpad = false);
+                        }
+                      },
+                      child: Container(
+                        width: 42,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        decoration: BoxDecoration(
+                          color: V2Colors.textMuted.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
                     Row(
                       children: [
                         IconButton(
