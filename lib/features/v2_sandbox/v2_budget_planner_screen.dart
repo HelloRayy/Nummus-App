@@ -27,14 +27,7 @@ class V2BudgetPlannerScreen extends StatefulWidget {
 
 class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   final List<_PlanItem> _items = [];
-  final TextEditingController _titleController = TextEditingController();
   String _rawDigits = '';
-
-  @override
-  void dispose() {
-    _titleController.dispose();
-    super.dispose();
-  }
 
   void _onKeyTap(String key) {
     HapticFeedback.lightImpact();
@@ -84,22 +77,75 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
     if (amount <= 0) return;
 
     HapticFeedback.mediumImpact();
-    final customTitle = _titleController.text.trim();
-    final title =
-        customTitle.isNotEmpty ? customTitle : 'Plan #${_items.length + 1}';
-
     setState(() {
       _items.insert(
         0,
         _PlanItem(
           id: DateTime.now().microsecondsSinceEpoch.toString(),
-          title: title,
+          title: 'Plan #${_items.length + 1}',
           amount: amount,
         ),
       );
       _rawDigits = '';
-      _titleController.clear();
     });
+  }
+
+  Future<void> _renameItem(int index) async {
+    final current = _items[index];
+    final controller = TextEditingController(text: current.title);
+    final newTitle = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: V2Colors.surfaceCard,
+        title: const Text(
+          'Rename Plan',
+          style: TextStyle(color: V2Colors.textPrimary, fontSize: 16),
+        ),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          style: const TextStyle(color: V2Colors.textPrimary),
+          decoration: InputDecoration(
+            hintText: 'e.g. Makan, Nonton',
+            hintStyle: const TextStyle(color: V2Colors.textMuted),
+            filled: true,
+            fillColor: V2Colors.surfaceElevated,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+          ),
+          onSubmitted: (v) => Navigator.pop(ctx, v.trim()),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: V2Colors.textSecondary),
+            ),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: V2Colors.accentPrimary,
+              foregroundColor: V2Colors.bgPrimary,
+            ),
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (newTitle != null && newTitle.isNotEmpty) {
+      setState(() {
+        _items[index] = _PlanItem(
+          id: current.id,
+          title: newTitle,
+          amount: current.amount,
+        );
+      });
+    }
   }
 
   Future<void> _convertToExpense(_PlanItem item) async {
@@ -248,50 +294,57 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                         horizontal: horizontalPadding,
                       ),
                       itemCount: _items.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      separatorBuilder: (_, _) => const Divider(
+                        color: V2Colors.borderSubtle,
+                        height: 1,
+                      ),
                       itemBuilder: (context, index) {
                         final item = _items[index];
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: V2Colors.surfaceCard,
-                            borderRadius: BorderRadius.circular(listItemRadius),
-                            border: Border.all(color: V2Colors.borderSubtle),
-                          ),
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
                           child: Row(
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      item.title,
-                                      style: V2Typography.cardTitle(size: 13),
-                                    ),
-                                    Text(
-                                      '-${_formatRp(item.amount)}',
-                                      style: V2Typography.displayBalance(
-                                        size: 13,
-                                      ).copyWith(
-                                        color: V2Colors.semanticWarning,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              IconButton(
-                                visualDensity: VisualDensity.compact,
-                                tooltip: 'Convert to Expense',
-                                onPressed: () => _convertToExpense(item),
-                                icon: const Icon(
-                                  Icons.check_circle_outline_rounded,
+                              InkWell(
+                                onTap: () => _convertToExpense(item),
+                                borderRadius: BorderRadius.circular(999),
+                                child: const Icon(
+                                  Icons.radio_button_unchecked_rounded,
                                   color: V2Colors.semanticPositive,
-                                  size: 20,
+                                  size: 22,
                                 ),
                               ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () => _renameItem(index),
+                                  borderRadius: BorderRadius.circular(6),
+                                  child: Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          item.title,
+                                          style: V2Typography.cardTitle(size: 14),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      const Icon(
+                                        Icons.edit_outlined,
+                                        size: 14,
+                                        color: V2Colors.textMuted,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '-${_formatRp(item.amount)}',
+                                style: V2Typography.displayBalance(size: 14)
+                                    .copyWith(color: V2Colors.semanticWarning),
+                              ),
+                              const SizedBox(width: 4),
                               IconButton(
                                 visualDensity: VisualDensity.compact,
                                 tooltip: 'Remove',
@@ -299,7 +352,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                                   setState(() => _items.removeAt(index));
                                 },
                                 icon: const Icon(
-                                  Icons.delete_outline_rounded,
+                                  Icons.close_rounded,
                                   color: V2Colors.textMuted,
                                   size: 18,
                                 ),
@@ -311,7 +364,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                     ),
             ),
 
-            // Custom Numpad Sheet
+            // Custom Numpad Sheet (no system keyboard)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(
@@ -346,35 +399,6 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                           ),
                         ),
                       ),
-                      SizedBox(
-                        width: 110,
-                        child: TextField(
-                          controller: _titleController,
-                          style: const TextStyle(
-                            color: V2Colors.textPrimary,
-                            fontSize: 12,
-                          ),
-                          decoration: InputDecoration(
-                            hintText: 'Note (opt)',
-                            hintStyle: const TextStyle(
-                              color: V2Colors.textMuted,
-                              fontSize: 12,
-                            ),
-                            filled: true,
-                            fillColor: V2Colors.surfaceElevated,
-                            isDense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 10,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
                       InkWell(
                         onTap: _rawDigits.isEmpty ? null : _addItem,
                         borderRadius: BorderRadius.circular(14),
