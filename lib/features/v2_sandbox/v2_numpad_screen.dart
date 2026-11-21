@@ -138,31 +138,19 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
                               ),
                             );
                           },
-                    borderRadius: BorderRadius.circular(999),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 160),
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
+                        horizontal: 8,
                         vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: _rawDigits.isEmpty
-                            ? V2Colors.surfaceCard
-                            : V2Colors.accentPrimary,
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color: _rawDigits.isEmpty
-                              ? V2Colors.borderSubtle
-                              : V2Colors.accentPrimary,
-                        ),
                       ),
                       child: Text(
                         'Save',
                         style: TextStyle(
                           color: _rawDigits.isEmpty
                               ? V2Colors.textMuted
-                              : V2Colors.bgPrimary,
-                          fontSize: 13,
+                              : V2Colors.accentPrimary,
+                          fontSize: 15,
                           fontWeight: FontWeight.w600,
                         ),
                       ),

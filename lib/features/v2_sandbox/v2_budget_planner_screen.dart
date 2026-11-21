@@ -341,23 +341,11 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                           onTap: selectedCount == 0
                               ? null
                               : _saveSelectedToExpenses,
-                          borderRadius: BorderRadius.circular(999),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 160),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
+                              horizontal: 8,
                               vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: selectedCount == 0
-                                  ? V2Colors.surfaceCard
-                                  : V2Colors.semanticPositive,
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: selectedCount == 0
-                                    ? V2Colors.borderSubtle
-                                    : V2Colors.semanticPositive,
-                              ),
                             ),
                             child: Text(
                               selectedCount == 0
@@ -366,8 +354,8 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                               style: TextStyle(
                                 color: selectedCount == 0
                                     ? V2Colors.textMuted
-                                    : V2Colors.textPrimary,
-                                fontSize: 12,
+                                    : V2Colors.accentPrimary,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),

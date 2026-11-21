@@ -173,37 +173,19 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                                     );
                                   }
                                 },
-                          borderRadius: BorderRadius.circular(999),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 160),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
+                              horizontal: 8,
                               vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: !canSave
-                                  ? V2Colors.surfaceCard
-                                  : (_activeTab == 0
-                                      ? V2Colors.semanticPositive
-                                      : V2Colors.accentPrimary),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: !canSave
-                                    ? V2Colors.borderSubtle
-                                    : (_activeTab == 0
-                                        ? V2Colors.semanticPositive
-                                        : V2Colors.accentPrimary),
-                              ),
                             ),
                             child: Text(
                               'Save',
                               style: TextStyle(
                                 color: !canSave
                                     ? V2Colors.textMuted
-                                    : (_activeTab == 0
-                                        ? V2Colors.textPrimary
-                                        : V2Colors.bgPrimary),
-                                fontSize: 13,
+                                    : V2Colors.accentPrimary,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
