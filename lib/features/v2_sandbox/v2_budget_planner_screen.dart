@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/v2_tokens.dart';
 import '../budget/repository/budget_repository.dart';
 import 'components/v2_spending_tracker_card.dart';
+import 'planner_motion_hud.dart';
 
 class _PlanItem {
   final String id;
@@ -36,6 +37,8 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   String? _editingId;
   String? _editingAmountId;
   String _sortMode = 'oldest'; // 'oldest' | 'highest' | 'lowest'
+  final PlannerMotionConfig _motionConfig = PlannerMotionConfig();
+  bool _cardPopping = false;
   final TextEditingController _editController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
@@ -178,7 +181,14 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
       }
       _applySort();
       _rawDigits = '';
+      _cardPopping = true;
     });
+    Future.delayed(
+      Duration(milliseconds: _motionConfig.cardPopMs.round()),
+      () {
+        if (mounted) setState(() => _cardPopping = false);
+      },
+    );
     _saveDraft();
     if (_sortMode == 'oldest' && _editingAmountId == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -300,8 +310,10 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
       backgroundColor: V2Colors.bgPrimary,
       resizeToAvoidBottomInset: false,
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
+            Column(
+              children: [
             // Top Bar with fixed-center Trip Planner title
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -378,12 +390,28 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                   bottom: _editingId != null ? 280 : 16,
                 ),
                 children: [
-                  V2SpendingTrackerCard(
-                    availableText: _formatRp(finalRemaining),
-                    limitText: _formatRp(totalPlanned),
-                    progress: budgetCurrent > 0
-                        ? (totalPlanned / budgetCurrent).clamp(0.0, 1.0)
-                        : 0.0,
+                  ListenableBuilder(
+                    listenable: _motionConfig,
+                    builder: (_, _) {
+                      return AnimatedScale(
+                        scale: _cardPopping ? _motionConfig.cardPopScale : 1.0,
+                        duration: Duration(
+                          milliseconds: _motionConfig.cardPopMs.round(),
+                        ),
+                        curve: _motionConfig.curve,
+                        child: V2SpendingTrackerCard(
+                          availableAmount: finalRemaining,
+                          limitAmount: totalPlanned,
+                          progress: budgetCurrent > 0
+                              ? (totalPlanned / budgetCurrent).clamp(0.0, 1.0)
+                              : 0.0,
+                          rollDurationMs: _motionConfig.rollDurationMs.round(),
+                          chartDurationMs:
+                              _motionConfig.chartDurationMs.round(),
+                          curve: _motionConfig.curve,
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
                   if (_items.isEmpty)
@@ -761,6 +789,9 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                   ],
                 ),
               ),
+                ],
+              ),
+            PlannerMotionHud(config: _motionConfig),
           ],
         ),
       ),

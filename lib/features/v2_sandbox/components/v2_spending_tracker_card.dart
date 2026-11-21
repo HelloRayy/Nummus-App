@@ -4,16 +4,40 @@ import '../../../core/theme/v2_tokens.dart';
 class V2SpendingTrackerCard extends StatelessWidget {
   final String availableText;
   final String limitText;
+  final int? availableAmount;
+  final int? limitAmount;
   final double progress;
+  final int rollDurationMs;
+  final int chartDurationMs;
+  final Curve curve;
   final VoidCallback? onTap;
 
   const V2SpendingTrackerCard({
     super.key,
-    this.availableText = '\$2135.00',
-    this.limitText = '\$3,280.45',
+    this.availableText = 'Rp 0',
+    this.limitText = 'Rp 0',
+    this.availableAmount,
+    this.limitAmount,
     this.progress = 0.58,
+    this.rollDurationMs = 400,
+    this.chartDurationMs = 400,
+    this.curve = Curves.easeOutQuart,
     this.onTap,
   });
+
+  String _formatRp(int amount) {
+    final isNeg = amount < 0;
+    final digits = amount.abs().toString();
+    final buffer = StringBuffer();
+    for (int i = 0; i < digits.length; i++) {
+      final reverseIndex = digits.length - 1 - i;
+      buffer.write(digits[i]);
+      if (reverseIndex > 0 && reverseIndex % 3 == 0) {
+        buffer.write('.');
+      }
+    }
+    return '${isNeg ? '-' : ''}Rp ${buffer.toString()}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,8 +86,8 @@ class V2SpendingTrackerCard extends StatelessWidget {
             const SizedBox(height: 16),
             TweenAnimationBuilder<double>(
               tween: Tween<double>(begin: progress, end: progress),
-              duration: const Duration(milliseconds: 400),
-              curve: Curves.easeOutQuart,
+              duration: Duration(milliseconds: chartDurationMs),
+              curve: curve,
               builder: (_, animatedProgress, _) {
                 final thumbIndex = (totalBars * animatedProgress)
                     .round()
@@ -140,15 +164,35 @@ class V2SpendingTrackerCard extends StatelessWidget {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
-                        child: Text(
-                          availableText,
-                          style: V2Typography.displayBalance(size: amountSize)
-                              .copyWith(
-                            color: availableText.startsWith('-')
-                                ? V2Colors.semanticDanger
-                                : V2Colors.semanticPositive,
-                          ),
-                        ),
+                        child: availableAmount != null
+                            ? TweenAnimationBuilder<int>(
+                                tween: IntTween(
+                                  begin: availableAmount!,
+                                  end: availableAmount!,
+                                ),
+                                duration: Duration(milliseconds: rollDurationMs),
+                                curve: curve,
+                                builder: (_, val, _) => Text(
+                                  _formatRp(val),
+                                  style: V2Typography.displayBalance(
+                                    size: amountSize,
+                                  ).copyWith(
+                                    color: val < 0
+                                        ? V2Colors.semanticDanger
+                                        : V2Colors.semanticPositive,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                availableText,
+                                style: V2Typography.displayBalance(
+                                  size: amountSize,
+                                ).copyWith(
+                                  color: availableText.startsWith('-')
+                                      ? V2Colors.semanticDanger
+                                      : V2Colors.semanticPositive,
+                                ),
+                              ),
                       ),
                     ],
                   ),
@@ -166,10 +210,27 @@ class V2SpendingTrackerCard extends StatelessWidget {
                       FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerRight,
-                        child: Text(
-                          limitText,
-                          style: V2Typography.displayBalance(size: amountSize),
-                        ),
+                        child: limitAmount != null
+                            ? TweenAnimationBuilder<int>(
+                                tween: IntTween(
+                                  begin: limitAmount!,
+                                  end: limitAmount!,
+                                ),
+                                duration: Duration(milliseconds: rollDurationMs),
+                                curve: curve,
+                                builder: (_, val, _) => Text(
+                                  _formatRp(val),
+                                  style: V2Typography.displayBalance(
+                                    size: amountSize,
+                                  ),
+                                ),
+                              )
+                            : Text(
+                                limitText,
+                                style: V2Typography.displayBalance(
+                                  size: amountSize,
+                                ),
+                              ),
                       ),
                     ],
                   ),
