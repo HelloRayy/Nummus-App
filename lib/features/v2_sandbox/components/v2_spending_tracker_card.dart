@@ -19,8 +19,8 @@ class V2SpendingTrackerCard extends StatelessWidget {
     this.availableAmount,
     this.limitAmount,
     this.progress = 0.58,
-    this.rollDurationMs = 400,
-    this.chartDurationMs = 400,
+    this.rollDurationMs = 1000,
+    this.chartDurationMs = 1000,
     this.curve = Curves.easeOutQuart,
     this.onTap,
   });
