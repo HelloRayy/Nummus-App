@@ -32,6 +32,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   String _rawDigits = '';
   bool _showNumpad = true;
   String? _editingId;
+  String _sortMode = 'oldest'; // 'oldest' | 'highest' | 'lowest'
   final TextEditingController _editController = TextEditingController();
 
   @override
@@ -89,16 +90,26 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
 
     HapticFeedback.mediumImpact();
     setState(() {
-      _items.insert(
-        0,
+      _items.add(
         _PlanItem(
           id: DateTime.now().microsecondsSinceEpoch.toString(),
           title: 'Plan #${_items.length + 1}',
           amount: amount,
         ),
       );
+      _applySort();
       _rawDigits = '';
     });
+  }
+
+  void _applySort() {
+    if (_sortMode == 'highest') {
+      _items.sort((a, b) => b.amount.compareTo(a.amount));
+    } else if (_sortMode == 'lowest') {
+      _items.sort((a, b) => a.amount.compareTo(b.amount));
+    } else {
+      _items.sort((a, b) => a.id.compareTo(b.id));
+    }
   }
 
   void _startInlineEdit(int index) {
@@ -277,7 +288,57 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                         horizontal: horizontalPadding,
                       ),
                       child: Column(
-                        children: List.generate(_items.length, (index) {
+                        children: [
+                          Row(
+                            children: [
+                              for (final opt in const [
+                                (id: 'oldest', label: 'Earliest'),
+                                (id: 'highest', label: 'Highest'),
+                                (id: 'lowest', label: 'Lowest'),
+                              ])
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _sortMode = opt.id;
+                                        _applySort();
+                                      });
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: _sortMode == opt.id
+                                            ? V2Colors.accentPrimary
+                                                .withValues(alpha: 0.18)
+                                            : V2Colors.surfaceCard,
+                                        borderRadius: BorderRadius.circular(999),
+                                        border: Border.all(
+                                          color: _sortMode == opt.id
+                                              ? V2Colors.accentPrimary
+                                              : V2Colors.borderSubtle,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        opt.label,
+                                        style: TextStyle(
+                                          color: _sortMode == opt.id
+                                              ? V2Colors.accentPrimary
+                                              : V2Colors.textSecondary,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ...List.generate(_items.length, (index) {
                           final item = _items[index];
                           return Column(
                             children: [
@@ -404,6 +465,7 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
                             ],
                           );
                         }),
+                        ],
                       ),
                     ),
                 ],
