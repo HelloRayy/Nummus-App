@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/v2_tokens.dart';
 import '../budget/repository/budget_repository.dart';
+import 'planner_tuner_hud.dart';
 
 class _PlanItem {
   final String id;
@@ -27,11 +28,13 @@ class V2BudgetPlannerScreen extends StatefulWidget {
 class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
   final List<_PlanItem> _items = [];
   final TextEditingController _titleController = TextEditingController();
+  final PlannerTunerConfig _config = PlannerTunerConfig();
   String _rawDigits = '';
 
   @override
   void dispose() {
     _titleController.dispose();
+    _config.dispose();
     super.dispose();
   }
 
@@ -149,8 +152,14 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
     return Scaffold(
       backgroundColor: V2Colors.bgPrimary,
       body: SafeArea(
-        child: Column(
-          children: [
+        child: ListenableBuilder(
+          listenable: _config,
+          builder: (_, _) {
+            final c = _config;
+            return Stack(
+              children: [
+                Column(
+                  children: [
             // Top Bar with Save All on top-right
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -434,6 +443,11 @@ class _V2BudgetPlannerScreenState extends State<V2BudgetPlannerScreen> {
               ),
             ),
           ],
+                ),
+                PlannerTunerHud(config: _config),
+              ],
+            );
+          },
         ),
       ),
     );

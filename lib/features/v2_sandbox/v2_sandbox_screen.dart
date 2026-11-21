@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/v2_tokens.dart';
 import '../budget/repository/budget_repository.dart';
-import 'components/dev_screen_banner.dart';
 import 'components/v2_bento_metric_grid.dart';
 import 'components/v2_bottom_action_bar.dart';
 import 'components/v2_header_greeting.dart';
@@ -41,9 +40,7 @@ class V2SandboxScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DevScreenBanner(
-      label: 'HOME',
-      child: Scaffold(
+    return Scaffold(
       backgroundColor: V2Colors.bgPrimary,
       body: SafeArea(
         child: ListenableBuilder(
@@ -170,7 +167,6 @@ class V2SandboxScreen extends StatelessWidget {
           },
         ),
       ),
-    ),
     );
   }
 }
