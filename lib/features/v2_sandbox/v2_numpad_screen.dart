@@ -138,6 +138,26 @@ class _V2NumpadScreenState extends State<V2NumpadScreen> {
 
             const Spacer(),
 
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: horizontalPadding),
+              child: Column(
+                children: [
+                  Text(
+                    'Log an expense',
+                    style: V2Typography.headlineGreeting(size: 24),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Every rupiah counts toward your weekly limit.',
+                    textAlign: TextAlign.center,
+                    style: V2Typography.labelMuted(size: 13),
+                  ),
+                ],
+              ),
+            ),
+
+            const Spacer(),
+
             // Bottom Sheet Container (Nominal + Categories + Numpad + CTA)
             Container(
               width: double.infinity,
