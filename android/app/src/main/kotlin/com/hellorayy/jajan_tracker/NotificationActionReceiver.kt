@@ -57,8 +57,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
                 // Already canceled above
             }
             ACTION_MUTE_SHOPEE -> {
-                ShopeeAccessibilityService.isMutedForSession = true
-                ShopeeAccessibilityService.hasShownGeneralInSession = true
+                // Accessibility service removed
             }
         }
     }

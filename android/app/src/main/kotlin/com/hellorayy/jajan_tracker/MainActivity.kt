@@ -89,15 +89,6 @@ class MainActivity : FlutterActivity() {
                     }
                     result.success(true)
                 }
-                "checkAccessibilityPermission" -> {
-                    val enabled = isAccessibilityServiceEnabled(this, ShopeeAccessibilityService::class.java)
-                    result.success(enabled)
-                }
-                "openAccessibilitySettings" -> {
-                    val intent = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
-                    startActivity(intent)
-                    result.success(true)
-                }
                 "checkNotificationPermission" -> {
                     val enabled = NotificationManagerCompat.from(this).areNotificationsEnabled()
                     result.success(enabled)
@@ -129,7 +120,6 @@ class MainActivity : FlutterActivity() {
                         maximumFractionDigits = 0
                     }
                     val balanceStr = formatter.format(balance)
-                    ShopeeAccessibilityService.isMutedForSession = false
 
                     val areEnabled = NotificationManagerCompat.from(this).areNotificationsEnabled()
                     if (!areEnabled && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -140,7 +130,6 @@ class MainActivity : FlutterActivity() {
                         )
                     }
 
-                    ShopeeAccessibilityService.showHeadsUpNotification(this, balanceStr, "Rp 50.000", isFromQris = true)
                     result.success(areEnabled)
                 }
                 "toggleFloatingBubble" -> {
@@ -227,22 +216,5 @@ class MainActivity : FlutterActivity() {
         JajanWidgetProvider.updateAllWidgets(applicationContext)
         JajanWidget4x2Provider.updateAllWidgets(applicationContext)
         JajanQuickTileService.requestTileUpdate(applicationContext)
-    }
-
-    private fun isAccessibilityServiceEnabled(context: Context, serviceClass: Class<*>): Boolean {
-        val expectedComponentName = "${context.packageName}/${serviceClass.name}"
-        val enabledServices = Settings.Secure.getString(
-            context.contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        ) ?: return false
-
-        val colonSplitter = enabledServices.split(":")
-        for (componentName in colonSplitter) {
-            if (componentName.equals(expectedComponentName, ignoreCase = true) ||
-                componentName.equals("${context.packageName}/.${serviceClass.simpleName}", ignoreCase = true)) {
-                return true
-            }
-        }
-        return false
     }
 }

@@ -136,6 +136,8 @@ class MockBudgetRepo extends ChangeNotifier implements BudgetRepository {
 
   @override
   Future<void> adjustRealBalance({required int actualBalance, bool allocateToSavings = false, String walletType = 'ewallet'}) async {}
+  @override
+  Future<void> adjustSpendableBudget(int targetAmount) async {}
 
   @override
   Future<void> deleteExpense(int id) async {}

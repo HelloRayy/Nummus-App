@@ -395,6 +395,30 @@ class BudgetRepository extends ChangeNotifier {
     }
   }
 
+  /// Directly adjusts the active spendable budget (remainingWeeklySpendable)
+  /// to match [targetAmount] by recording only the exact difference.
+  Future<void> adjustSpendableBudget(int targetAmount) async {
+    final current = remainingWeeklySpendable;
+    final diff = targetAmount - current;
+    if (diff == 0) return;
+
+    if (diff > 0) {
+      await addTopUp(
+        diff,
+        note: 'Penyesuaian Budget',
+        walletType: 'ewallet',
+      );
+    } else {
+      await addExpense(
+        diff.abs(),
+        note: 'Penyesuaian Budget',
+        categoryId: ExpenseCategory.penyesuaian.id,
+        isIncome: false,
+        walletType: 'ewallet',
+      );
+    }
+  }
+
   /// Records a pending transaction and removes it from pending list atomically
   Future<void> resolvePendingTransaction(
     int pendingId,

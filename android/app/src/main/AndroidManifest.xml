@@ -60,19 +60,6 @@
                 android:resource="@xml/jajan_widget_4x2_info" />
         </receiver>
 
-        <!-- Shopee Accessibility Service -->
-        <service
-            android:name=".ShopeeAccessibilityService"
-            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.accessibilityservice.AccessibilityService" />
-            </intent-filter>
-            <meta-data
-                android:name="android.accessibilityservice"
-                android:resource="@xml/shopee_accessibility_service_config" />
-        </service>
-
         <!-- Quick Settings Tile Service (Panel Pintasan Atas) -->
         <service
             android:name=".JajanQuickTileService"

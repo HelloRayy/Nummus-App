@@ -166,9 +166,8 @@ class _V2AddBudgetScreenState extends State<V2AddBudgetScreen> {
                                     );
                                   } else if (_activeTab == 2 &&
                                       adjustAmount != null) {
-                                    await widget.repository.adjustRealBalance(
-                                      actualBalance: adjustAmount,
-                                    );
+                                    await widget.repository
+                                        .adjustSpendableBudget(adjustAmount);
                                     if (!context.mounted) return;
                                     Navigator.pop(context);
                                     ScaffoldMessenger.of(context).showSnackBar(
