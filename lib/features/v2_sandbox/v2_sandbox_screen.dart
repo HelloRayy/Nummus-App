@@ -10,6 +10,7 @@ import 'v2_add_budget_screen.dart';
 import 'v2_all_transactions_screen.dart';
 import 'v2_budget_planner_screen.dart';
 import 'v2_numpad_screen.dart';
+import 'v2_settings_screen.dart';
 
 class V2SandboxScreen extends StatelessWidget {
   final BudgetRepository repository;
@@ -137,42 +138,11 @@ class V2SandboxScreen extends StatelessWidget {
                         ),
                       );
                     } else if (item == 'Settings') {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          backgroundColor: V2Colors.surfaceCard,
-                          title: const Text(
-                            'Reset All Data?',
-                            style: TextStyle(color: V2Colors.textPrimary),
-                          ),
-                          content: const Text(
-                            'Semua pengeluaran dan budget minggu ini akan di-reset ke Rp 0.',
-                            style: TextStyle(color: V2Colors.textSecondary),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: const Text(
-                                'Cancel',
-                                style: TextStyle(color: V2Colors.textSecondary),
-                              ),
-                            ),
-                            FilledButton(
-                              style: FilledButton.styleFrom(
-                                backgroundColor: V2Colors.semanticDanger,
-                              ),
-                              onPressed: () async {
-                                await repository.resetAllExpenses();
-                                await repository.updateBudget(
-                                  weeklyIncome: 0,
-                                  weeklySavingsTarget: 0,
-                                );
-                                if (!ctx.mounted) return;
-                                Navigator.pop(ctx);
-                              },
-                              child: const Text('Reset to 0'),
-                            ),
-                          ],
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              V2SettingsScreen(repository: repository),
                         ),
                       );
                     }

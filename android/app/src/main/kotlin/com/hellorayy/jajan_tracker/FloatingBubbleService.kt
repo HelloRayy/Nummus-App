@@ -38,7 +38,10 @@ class FloatingBubbleService : Service() {
 
     private var windowManager: WindowManager? = null
     private var bubbleView: View? = null
+    private var circleMenuView: FloatingCircleMenuView? = null
     private var calcView: View? = null
+    private val snoozeHandler = Handler(Looper.getMainLooper())
+    private var snoozeRunnable: Runnable? = null
 
     private lateinit var bubbleParams: WindowManager.LayoutParams
     private lateinit var calcParams: WindowManager.LayoutParams
@@ -111,9 +114,15 @@ class FloatingBubbleService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.getBooleanExtra(EXTRA_REFRESH_HUD, false) == true) {
+            refreshHudBudget()
+            return START_STICKY
+        }
         if (intent?.getBooleanExtra(EXTRA_OPEN_CALCULATOR, false) == true) {
             isStandalone = intent.getBooleanExtra(EXTRA_STANDALONE, false)
             expandToCalculator()
+        } else {
+            refreshHudBudget()
         }
         return START_STICKY
     }
@@ -158,24 +167,51 @@ class FloatingBubbleService : Service() {
             WindowManager.LayoutParams.TYPE_PHONE
         }
 
+        val menuView = FloatingCircleMenuView(this)
+        circleMenuView = menuView
+        bubbleView = menuView
+
         bubbleParams = WindowManager.LayoutParams(
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.WRAP_CONTENT,
             layoutFlag,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
-                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS or
+                    WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH,
             PixelFormat.TRANSLUCENT
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = 20
+            x = 16
             y = 300
         }
 
-        val inflater = LayoutInflater.from(this)
-        bubbleView = inflater.inflate(R.layout.floating_bubble_layout, null)
+        menuView.listener = object : FloatingCircleMenuView.Listener {
+            override fun onMenuItemClicked(itemId: String) {
+                when (itemId) {
+                    "check" -> expandToCalculator()
+                    "info" -> showBudgetInfoToast()
+                    "save" -> recordSavedImpulse()
+                    "hide" -> snoozeHudForFiveMinutes()
+                }
+            }
 
-        // Drag & Snap handling for bubble
-        bubbleView?.setOnTouchListener(object : View.OnTouchListener {
+            override fun onExpandStateChanged(expanded: Boolean) {
+                val delta = (menuView.getExpandedSizePx() - menuView.getCollapsedSizePx()) / 2
+                if (expanded) {
+                    bubbleParams.x -= delta
+                    bubbleParams.y -= delta
+                } else {
+                    bubbleParams.x += delta
+                    bubbleParams.y += delta
+                }
+                try {
+                    wm.updateViewLayout(bubbleView, bubbleParams)
+                } catch (_: Exception) {}
+            }
+        }
+
+        // Drag & Snap handling for AssistiveTouch HUD circle
+        menuView.setOnTouchListener(object : View.OnTouchListener {
             private var initialX = 0
             private var initialY = 0
             private var initialTouchX = 0f
@@ -185,6 +221,12 @@ class FloatingBubbleService : Service() {
             override fun onTouch(v: View?, event: MotionEvent?): Boolean {
                 if (event == null) return false
                 when (event.action) {
+                    MotionEvent.ACTION_OUTSIDE -> {
+                        if (menuView.isExpanded) {
+                            menuView.collapse()
+                        }
+                        return false
+                    }
                     MotionEvent.ACTION_DOWN -> {
                         initialX = bubbleParams.x
                         initialY = bubbleParams.y
@@ -198,18 +240,24 @@ class FloatingBubbleService : Service() {
                         val dy = (event.rawY - initialTouchY).toInt()
                         if (abs(dx) > 10 || abs(dy) > 10) {
                             isClick = false
+                            if (menuView.isExpanded) {
+                                menuView.collapse()
+                            }
                         }
-                        bubbleParams.x = initialX + dx
-                        bubbleParams.y = initialY + dy
-                        try {
-                            wm.updateViewLayout(bubbleView, bubbleParams)
-                        } catch (_: Exception) {}
+                        if (!menuView.isExpanded) {
+                            bubbleParams.x = initialX + dx
+                            bubbleParams.y = initialY + dy
+                            try {
+                                wm.updateViewLayout(bubbleView, bubbleParams)
+                            } catch (_: Exception) {}
+                        }
                         return true
                     }
                     MotionEvent.ACTION_UP -> {
                         if (isClick) {
-                            expandToCalculator()
-                        } else {
+                            refreshHudBudget()
+                            menuView.toggle()
+                        } else if (!menuView.isExpanded) {
                             snapBubbleToEdge()
                         }
                         return true
@@ -219,11 +267,48 @@ class FloatingBubbleService : Service() {
             }
         })
 
+        refreshHudBudget()
+
         try {
             wm.addView(bubbleView, bubbleParams)
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    private fun refreshHudBudget() {
+        val data = JajanWidgetStorage.loadWidgetData(this)
+        val remaining = data.dailySafe
+        val limit = if (data.dailyAllowance > 0L) data.dailyAllowance else remaining.coerceAtLeast(1L)
+        circleMenuView?.updateBudgetDisplay(remaining, limit)
+    }
+
+    private fun showBudgetInfoToast() {
+        val data = JajanWidgetStorage.loadWidgetData(this)
+        val fmt = NumberFormat.getCurrencyInstance(Locale("id", "ID")).apply {
+            maximumFractionDigits = 0
+        }
+        val msg = "Hari ini: ${fmt.format(data.dailySafe)} | Sisa minggu: ${fmt.format(data.remainingBalance)}"
+        Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+    }
+
+    private fun recordSavedImpulse() {
+        val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+        val current = prefs.getLong("flutter.hud_saved_count", 0L) + 1L
+        prefs.edit().putLong("flutter.hud_saved_count", current).apply()
+        Toast.makeText(this, "Mantap! Berhasil tahan jajan (#$current)", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun snoozeHudForFiveMinutes() {
+        snoozeRunnable?.let { snoozeHandler.removeCallbacks(it) }
+        bubbleView?.visibility = View.GONE
+        Toast.makeText(this, "HUD disembunyikan 5 menit", Toast.LENGTH_SHORT).show()
+        val r = Runnable {
+            refreshHudBudget()
+            bubbleView?.visibility = View.VISIBLE
+        }
+        snoozeRunnable = r
+        snoozeHandler.postDelayed(r, 5 * 60 * 1000L)
     }
 
     private fun snapBubbleToEdge() {
@@ -232,8 +317,11 @@ class FloatingBubbleService : Service() {
         @Suppress("DEPRECATION")
         wm.defaultDisplay.getSize(size)
         val screenWidth = size.x
+        val bubbleWidth = circleMenuView?.getCollapsedSizePx() ?: 160
 
-        bubbleParams.x = if (bubbleParams.x < screenWidth / 2) 16 else screenWidth - 160
+        val isRight = bubbleParams.x + (bubbleWidth / 2) >= screenWidth / 2
+        circleMenuView?.isDockedRight = isRight
+        bubbleParams.x = if (isRight) screenWidth - bubbleWidth - 16 else 16
         try {
             wm.updateViewLayout(bubbleView, bubbleParams)
         } catch (_: Exception) {}
@@ -838,6 +926,7 @@ class FloatingBubbleService : Service() {
             stopSelf()
         } else {
             try {
+                refreshHudBudget()
                 bubbleView?.visibility = View.VISIBLE
             } catch (_: Exception) {}
         }
@@ -1018,6 +1107,8 @@ class FloatingBubbleService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         stopCursorBlink()
+        snoozeRunnable?.let { snoozeHandler.removeCallbacks(it) }
+        snoozeRunnable = null
         isRunning = false
         val wm = windowManager ?: return
 
@@ -1032,8 +1123,19 @@ class FloatingBubbleService : Service() {
         private const val BUBBLE_CHANNEL_ID = "jajan_floating_bubble_channel"
         const val EXTRA_OPEN_CALCULATOR = "EXTRA_OPEN_CALCULATOR"
         const val EXTRA_STANDALONE = "EXTRA_STANDALONE"
+        const val EXTRA_REFRESH_HUD = "EXTRA_REFRESH_HUD"
 
         var isRunning: Boolean = false
+
+        fun refreshHud(context: Context) {
+            if (!isRunning) return
+            try {
+                val intent = Intent(context, FloatingBubbleService::class.java).apply {
+                    putExtra(EXTRA_REFRESH_HUD, true)
+                }
+                context.startService(intent)
+            } catch (_: Exception) {}
+        }
 
         fun start(context: Context) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {

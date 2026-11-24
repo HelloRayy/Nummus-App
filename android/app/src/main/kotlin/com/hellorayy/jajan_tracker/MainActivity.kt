@@ -37,6 +37,7 @@ class MainActivity : FlutterActivity() {
                     JajanWidgetProvider.updateAllWidgets(applicationContext)
                     JajanWidget4x2Provider.updateAllWidgets(applicationContext)
                     JajanQuickTileService.requestTileUpdate(applicationContext)
+                    FloatingBubbleService.refreshHud(applicationContext)
                     result.success(true)
                 }
                 "getInitialAction" -> {
